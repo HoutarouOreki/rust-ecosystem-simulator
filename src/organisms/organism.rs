@@ -72,9 +72,9 @@ impl Organism {
             energy: species.max_energy,
             health: species.max_health,
             age: 0,
-            species: species.clone(),
+            species,
             layout_info: LayoutInfo::new(),
-            walking_manager: walking_manager,
+            walking_manager,
         }
     }
 

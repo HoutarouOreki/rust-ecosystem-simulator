@@ -7,7 +7,7 @@ use ggez::{
 use crate::organisms::{organism::Organism, species::Species};
 
 pub struct Environment {
-    organisms: Vec<Box<Organism>>,
+    organisms: Vec<Organism>,
     step: u64,
     pub offset: Point2<f32>,
 }
@@ -30,7 +30,7 @@ impl Environment {
             cost_of_birth: 0,
             can_walk: true,
         };
-        let mut organism = Box::new(Organism::new(Box::new(species)));
+        let mut organism = Organism::new(Box::new(species));
         organism.set_position(Point2 { x: 400., y: 400. });
         organisms.push(organism);
         Environment {
@@ -49,7 +49,7 @@ impl Environment {
             organism.draw(&parent_absolute_rect, canvas, gfx);
         }
 
-        canvas.draw(&Text::new(&self.step.to_string()), DrawParam::default())
+        canvas.draw(&Text::new(self.step.to_string()), DrawParam::default())
     }
 
     fn draw_lines(&self, canvas: &mut Canvas, gfx: &impl Has<GraphicsContext>) {

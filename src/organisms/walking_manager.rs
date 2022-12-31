@@ -66,7 +66,7 @@ impl WalkingManager {
         let distance: f32 = self
             .rng
             .sample(Uniform::new(NEW_TARGET_DISTANCE[0], NEW_TARGET_DISTANCE[1]));
-        let angle = self.rng.gen_range(0f32..6.28319); // 0 to 360 but in radians
+        let angle = self.rng.gen_range(0f32..std::f32::consts::TAU); // 0 to 360 but in radians
 
         let direction_vector = create_direction_vector(angle);
         let target_relative = vecmath::vec2_scale(direction_vector, distance);
@@ -78,11 +78,11 @@ impl WalkingManager {
 
 fn create_direction_vector(angle: f32) -> [f32; 2] {
     let forward_vector = vecmath::vec2_normalized([0f32, 1f32]);
-    let direction_vector = [
+    
+    [
         forward_vector[0] * angle.cos() - forward_vector[1] * angle.sin(),
         forward_vector[0] * angle.sin() + forward_vector[1] * angle.cos(),
-    ];
-    direction_vector
+    ]
 }
 
 fn calculate_position(delta_s: f32, current_pos: Point2<f32>, target: Point2<f32>) -> Point2<f32> {
