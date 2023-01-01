@@ -13,6 +13,7 @@ use ggez::graphics::{self, Color};
 
 use ggez::input::keyboard::KeyboardContext;
 
+use ggez::mint::Point2;
 use ggez::winit::event::VirtualKeyCode;
 use ggez::{Context, ContextBuilder, GameResult};
 
@@ -64,14 +65,21 @@ impl MyGame {
             return;
         }
 
-        self.environment.offset = vecmath::vec2_add(
-            self.environment.offset.into(),
+        let offset: [f32; 2] = vecmath::vec2_add(
+            [
+                self.environment.offset.x as f32,
+                self.environment.offset.y as f32,
+            ],
             vecmath::vec2_scale(
                 vecmath::vec2_normalized(camera_moving_direction),
                 CAMERA_SPEED * ctx.time.delta().as_secs_f32(),
             ),
-        )
-        .into();
+        );
+
+        self.environment.offset = Point2 {
+            x: offset[0] as i32,
+            y: offset[1] as i32,
+        };
     }
 
     fn direction_from_keyboard_state(&self, ctx: &KeyboardContext) -> [f32; 2] {
