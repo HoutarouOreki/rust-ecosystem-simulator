@@ -47,6 +47,10 @@ impl Organism {
         self.id
     }
 
+    pub fn is_alive(&self) -> bool {
+        self.age <= self.species.max_age
+    }
+
     pub fn is_dead(&self) -> bool {
         self.age > self.species.max_age
     }

@@ -21,6 +21,7 @@ const WORLD_SIZE: f32 =
 pub struct Environment {
     organisms: Vec<Organism>,
     step: u64,
+    time: Duration,
     pub offset: Point2<i32>,
     pub zoom: f32,
     circle_mesh: Option<Mesh>,
@@ -31,7 +32,9 @@ impl Environment {
         for organism in self.organisms.iter_mut() {
             organism.simulate(delta);
         }
+        self.organisms.retain(|x| x.is_alive());
         self.step += 1;
+        self.time += delta;
     }
 
     pub fn new(generation_configuration: &GenerationConfiguration) -> Environment {
@@ -42,6 +45,7 @@ impl Environment {
             offset: Point2 { x: 0, y: 0 },
             zoom: 100.0,
             circle_mesh: Option::None,
+            time: Duration::ZERO,
         }
     }
 
@@ -95,10 +99,20 @@ impl Environment {
             };
             parent_absolute_rect.translate(offset);
             parent_absolute_rect.scale(self.zoom, self.zoom);
-            organism.draw(&parent_absolute_rect, self.zoom, canvas, gfx, &self.circle_mesh.to_owned().unwrap());
+            organism.draw(
+                &parent_absolute_rect,
+                self.zoom,
+                canvas,
+                gfx,
+                &self.circle_mesh.to_owned().unwrap(),
+            );
         }
 
-        canvas.draw(&Text::new(self.step.to_string()), DrawParam::default())
+        canvas.draw(&Text::new(self.step.to_string()), DrawParam::default());
+        canvas.draw(
+            &Text::new(format!("{:.2}", self.time.as_secs_f32())),
+            DrawParam::default().dest([0.0, 20.0]),
+        )
     }
 
     fn draw_lines(&self, canvas: &mut Canvas, gfx: &impl Has<GraphicsContext>) {

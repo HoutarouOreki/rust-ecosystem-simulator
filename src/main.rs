@@ -144,6 +144,20 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
                 },
                 amount_per_meter: 0.7,
             },
+            SpeciesGenerationConfiguration {
+                species: Species {
+                    name: String::from("Short-lived species"),
+                    max_energy: 30,
+                    max_health: 30,
+                    max_age: Duration::from_secs(5),
+                    cost_of_birth: 20,
+                    can_walk: false,
+                    can_eat_organisms: false,
+                    can_photosynthesize: false,
+                    color: Color::from_rgb(200, 0, 0),
+                },
+                amount_per_meter: 0.1,
+            },
         ],
     }
 }
