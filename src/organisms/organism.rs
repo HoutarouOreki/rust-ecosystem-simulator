@@ -2,7 +2,7 @@ use std::{sync::atomic::{AtomicU64, Ordering}, time::Duration};
 
 use ggez::{
     context::Has,
-    graphics::{Canvas, DrawMode, DrawParam, FillOptions, GraphicsContext, Mesh, Rect},
+    graphics::{Canvas, DrawParam, GraphicsContext, Mesh, Rect},
     mint::Point2,
 };
 
