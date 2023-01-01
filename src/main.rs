@@ -1,12 +1,16 @@
 #![allow(dead_code)]
 
+mod configurations;
 mod environment;
 mod layout_info;
 mod organisms;
 
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
+use std::time::Duration;
 
+use configurations::generation_configuration::GenerationConfiguration;
+use configurations::species_generation_configuration::SpeciesGenerationConfiguration;
 use environment::Environment;
 use ggez::event::{self, EventHandler};
 use ggez::graphics::{self, Color};
@@ -16,6 +20,7 @@ use ggez::input::keyboard::KeyboardContext;
 use ggez::mint::Point2;
 use ggez::winit::event::VirtualKeyCode;
 use ggez::{Context, ContextBuilder, GameResult};
+use organisms::species::Species;
 
 fn main() {
     // Make a Context.
@@ -27,7 +32,7 @@ fn main() {
     // Usually, you should provide it with the Context object to
     // use when setting your game up.
     let my_game = MyGame::new(&mut ctx);
-    ctx.gfx.set_window_title("HHHHHhhhhhhhhhhhhhhhhhhhh");
+    ctx.gfx.set_window_title("Ecosystem Simulator");
     let _resize_result = ctx.gfx.set_resizable(true);
 
     // Run!
@@ -37,18 +42,19 @@ fn main() {
 const CAMERA_SPEED: f32 = 200.0;
 
 struct MyGame {
-    seconds_since_last_simulation_step: f32,
-    seconds_per_step: f32,
+    time_since_last_simulation_step: Duration,
+    time_per_step: Duration,
     environment: Environment,
     key_dictionary: HashMap<VirtualKeyCode, [f32; 2], RandomState>,
 }
 
 impl MyGame {
     pub fn new(_ctx: &mut Context) -> MyGame {
+        let generation_configuration = generate_default_generation_configuration();
         MyGame {
-            seconds_since_last_simulation_step: 0.0,
-            environment: Environment::new(),
-            seconds_per_step: 0.01,
+            time_since_last_simulation_step: Duration::ZERO,
+            environment: Environment::new(&generation_configuration),
+            time_per_step: Duration::from_secs_f32(0.05),
             key_dictionary: HashMap::from([
                 (VirtualKeyCode::Left, [1f32, 0f32]),
                 (VirtualKeyCode::Right, [-1f32, 0f32]),
@@ -93,13 +99,48 @@ impl MyGame {
     }
 }
 
+fn generate_default_generation_configuration() -> GenerationConfiguration {
+    GenerationConfiguration {
+        species: vec![
+            SpeciesGenerationConfiguration {
+                species: Species {
+                    name: String::from("Test Species 1"),
+                    max_energy: 256,
+                    max_health: 256,
+                    max_age: Duration::from_secs(200),
+                    cost_of_birth: 60,
+                    can_walk: true,
+                    can_eat_organisms: true,
+                    can_photosynthesize: false,
+                    color: Color::from_rgb(0, 91, 150),
+                },
+                amount_per_meter: 0.2,
+            },
+            SpeciesGenerationConfiguration {
+                species: Species {
+                    name: String::from("Test Species 2"),
+                    max_energy: 30,
+                    max_health: 30,
+                    max_age: Duration::from_secs(9000),
+                    cost_of_birth: 20,
+                    can_walk: false,
+                    can_eat_organisms: false,
+                    can_photosynthesize: true,
+                    color: Color::from_rgb(79, 121, 66),
+                },
+                amount_per_meter: 0.7,
+            },
+        ],
+    }
+}
+
 impl EventHandler for MyGame {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.seconds_since_last_simulation_step += ctx.time.delta().as_secs_f32();
+        self.time_since_last_simulation_step += ctx.time.delta();
 
-        if self.seconds_since_last_simulation_step > self.seconds_per_step {
-            self.seconds_since_last_simulation_step -= self.seconds_per_step;
-            self.environment.simulate(self.seconds_per_step);
+        if self.time_since_last_simulation_step > self.time_per_step {
+            self.time_since_last_simulation_step -= self.time_per_step;
+            self.environment.simulate(self.time_per_step);
         }
 
         self.move_view(ctx);
