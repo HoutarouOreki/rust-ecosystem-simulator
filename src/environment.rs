@@ -2,21 +2,28 @@ use std::time::Duration;
 
 use ggez::{
     context::Has,
-    graphics::{Canvas, Color, DrawParam, GraphicsContext, Mesh, Rect, Text},
+    graphics::{
+        Canvas, Color, DrawMode, DrawParam, FillOptions, GraphicsContext, Mesh, Rect, Text,
+    },
     mint::Point2,
 };
 use rand::{distributions::Uniform, prelude::Distribution};
 
-use crate::{organisms::{organism::Organism}, configurations::generation_configuration::GenerationConfiguration};
+use crate::{
+    configurations::generation_configuration::GenerationConfiguration,
+    organisms::organism::Organism,
+};
 
-const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 15f32;
-const WORLD_SIZE: f32 = (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
+const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 10f32;
+const WORLD_SIZE: f32 =
+    (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
 pub struct Environment {
     organisms: Vec<Organism>,
     step: u64,
     pub offset: Point2<i32>,
     pub zoom: f32,
+    circle_mesh: Option<Mesh>,
 }
 
 impl Environment {
@@ -34,6 +41,7 @@ impl Environment {
             step: 0,
             offset: Point2 { x: 0, y: 0 },
             zoom: 100.0,
+            circle_mesh: Option::None,
         }
     }
 
@@ -41,14 +49,20 @@ impl Environment {
         let mut organisms = Vec::new();
 
         let mut rng = rand::thread_rng();
-        let coordinate_uniform = Uniform::new_inclusive(-BOUNDARY_DISTANCE_FROM_CENTER, BOUNDARY_DISTANCE_FROM_CENTER);
+        let coordinate_uniform = Uniform::new_inclusive(
+            -BOUNDARY_DISTANCE_FROM_CENTER,
+            BOUNDARY_DISTANCE_FROM_CENTER,
+        );
 
         for species_configuration in &generation_configuration.species {
             let organisms_amount = (species_configuration.amount_per_meter * WORLD_SIZE) as u32;
 
             for _ in 0..organisms_amount {
                 let mut organism = Organism::new(species_configuration.species.to_owned());
-                organism.set_position_x_y(coordinate_uniform.sample(&mut rng), coordinate_uniform.sample(&mut rng));
+                organism.set_position_x_y(
+                    coordinate_uniform.sample(&mut rng),
+                    coordinate_uniform.sample(&mut rng),
+                );
                 organisms.push(organism);
             }
         }
@@ -56,8 +70,22 @@ impl Environment {
         organisms
     }
 
-    pub fn draw(&self, canvas: &mut Canvas, gfx: &impl Has<GraphicsContext>) {
+    pub fn draw(&mut self, canvas: &mut Canvas, gfx: &impl Has<GraphicsContext>) {
         self.draw_lines(canvas, gfx);
+
+        if self.circle_mesh.is_none() {
+            self.circle_mesh = Some(
+                Mesh::new_circle(
+                    gfx,
+                    DrawMode::Fill(FillOptions::DEFAULT),
+                    Point2 { x: 0.0, y: 0.0 },
+                    14.0,
+                    1.,
+                    Color::WHITE,
+                )
+                .unwrap(),
+            );
+        };
 
         for organism in self.organisms.iter() {
             let mut parent_absolute_rect = canvas.screen_coordinates().unwrap();
@@ -67,7 +95,7 @@ impl Environment {
             };
             parent_absolute_rect.translate(offset);
             parent_absolute_rect.scale(self.zoom, self.zoom);
-            organism.draw(&parent_absolute_rect, self.zoom, canvas, gfx);
+            organism.draw(&parent_absolute_rect, self.zoom, canvas, gfx, &self.circle_mesh.to_owned().unwrap());
         }
 
         canvas.draw(&Text::new(self.step.to_string()), DrawParam::default())

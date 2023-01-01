@@ -29,22 +29,14 @@ impl Organism {
         parent_absolute_rect: &Rect,
         parent_rect_scale: f32,
         canvas: &mut Canvas,
-        gfx: &impl Has<GraphicsContext>,
+        _gfx: &impl Has<GraphicsContext>,
+        circle_mesh: &Mesh,
     ) {
         let absolute_rect = self.layout_info.get_absolute_rect(parent_absolute_rect, parent_rect_scale);
-        let drawable: Mesh = Mesh::new_circle(
-            gfx,
-            DrawMode::Fill(FillOptions::DEFAULT),
-            Point2 { x: 0.0, y: 0.0 },
-            14.0,
-            0.4,
-            self.species.color,
-        )
-        .unwrap();
 
-        let draw_param = DrawParam::default().dest(absolute_rect.point());
+        let draw_param = DrawParam::default().dest(absolute_rect.point()).color(self.species.color);
 
-        canvas.draw(&drawable, draw_param)
+        canvas.draw(circle_mesh, draw_param)
     }
 
     pub fn eat(&mut self, amount: u32) {

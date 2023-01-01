@@ -40,6 +40,7 @@ fn main() {
 }
 
 const CAMERA_SPEED: f32 = 200.0;
+const ZOOM_SPEED: f32 = 1.4;
 
 struct MyGame {
     time_since_last_simulation_step: Duration,
@@ -64,7 +65,20 @@ impl MyGame {
         }
     }
 
-    fn move_view(&mut self, ctx: &Context) {
+    fn handle_camera_controls(&mut self, ctx: &Context) {
+        if ctx.keyboard.is_key_pressed(VirtualKeyCode::Plus) {
+            self.environment.zoom += self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
+        }
+        if ctx.keyboard.is_key_pressed(VirtualKeyCode::Minus) {
+            self.environment.zoom -= self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
+        }
+
+        if self.environment.zoom.is_nan() {
+            self.environment.zoom = 1.0;
+        } else {
+            self.environment.zoom = self.environment.zoom.clamp(1.0, 10000.0);
+        }
+
         let camera_moving_direction = self.direction_from_keyboard_state(&ctx.keyboard);
 
         if camera_moving_direction == [0f32, 0f32] {
@@ -143,7 +157,7 @@ impl EventHandler for MyGame {
             self.environment.simulate(self.time_per_step);
         }
 
-        self.move_view(ctx);
+        self.handle_camera_controls(ctx);
 
         Ok(())
     }
