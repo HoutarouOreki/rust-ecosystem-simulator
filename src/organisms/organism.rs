@@ -1,4 +1,7 @@
-use std::{sync::atomic::{AtomicU64, Ordering}, time::Duration};
+use std::{
+    sync::atomic::{AtomicU64, Ordering},
+    time::Duration,
+};
 
 use ggez::{
     context::Has,
@@ -32,9 +35,13 @@ impl Organism {
         _gfx: &impl Has<GraphicsContext>,
         circle_mesh: &Mesh,
     ) {
-        let absolute_rect = self.layout_info.get_absolute_rect(parent_absolute_rect, parent_rect_scale);
+        let absolute_rect = self
+            .layout_info
+            .get_absolute_rect(parent_absolute_rect, parent_rect_scale);
 
-        let draw_param = DrawParam::default().dest(absolute_rect.point()).color(self.species.color);
+        let draw_param = DrawParam::default()
+            .dest(absolute_rect.point())
+            .color(self.species.color);
 
         canvas.draw(circle_mesh, draw_param)
     }

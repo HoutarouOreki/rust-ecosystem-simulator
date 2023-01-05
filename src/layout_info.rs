@@ -1,4 +1,4 @@
-use ggez::{graphics::Rect};
+use ggez::graphics::Rect;
 
 #[derive(Clone, Copy)]
 pub struct LayoutInfo {

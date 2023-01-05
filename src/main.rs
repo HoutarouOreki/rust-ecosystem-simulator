@@ -67,10 +67,12 @@ impl MyGame {
 
     fn handle_camera_controls(&mut self, ctx: &Context) {
         if ctx.keyboard.is_key_pressed(VirtualKeyCode::Plus) {
-            self.environment.zoom += self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
+            self.environment.zoom +=
+                self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
         }
         if ctx.keyboard.is_key_pressed(VirtualKeyCode::Minus) {
-            self.environment.zoom -= self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
+            self.environment.zoom -=
+                self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
         }
 
         if self.environment.zoom.is_nan() {

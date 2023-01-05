@@ -117,8 +117,10 @@ fn calculate_position(
         //     "Direction to target: {}, {}",
         //     direction_to_target[0], direction_to_target[1]
         // );
-        let direction_to_target_per_time =
-            vecmath::vec2_scale(direction_to_target, WALKING_SPEED_PER_SECOND * delta.as_secs_f32());
+        let direction_to_target_per_time = vecmath::vec2_scale(
+            direction_to_target,
+            WALKING_SPEED_PER_SECOND * delta.as_secs_f32(),
+        );
         vecmath::vec2_add(current_pos.into(), direction_to_target_per_time).into()
     }
 }
