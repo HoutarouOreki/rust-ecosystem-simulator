@@ -29,18 +29,18 @@ pub struct Organism {
 impl Organism {
     pub fn draw(
         &self,
-        parent_absolute_rect: &Rect,
+        parent_screen_rect: &Rect,
         parent_rect_scale: f32,
         canvas: &mut Canvas,
         _gfx: &impl Has<GraphicsContext>,
         circle_mesh: &Mesh,
     ) {
-        let absolute_rect = self
+        let screen_rect = self
             .layout_info
-            .get_absolute_rect(parent_absolute_rect, parent_rect_scale);
+            .get_screen_rect(parent_screen_rect, parent_rect_scale);
 
         let draw_param = DrawParam::default()
-            .dest(absolute_rect.point())
+            .dest(screen_rect.point())
             .color(self.species.color);
 
         canvas.draw(circle_mesh, draw_param)
@@ -94,12 +94,16 @@ impl Organism {
         self.walking(delta);
 
         self.layout_info = LayoutInfo {
-            relative_rect: Rect {
+            raw_rect_in_parent: Rect {
                 x: self.position.x,
                 y: self.position.y,
-                w: 20.0,
-                h: 20.0,
+                w: 0.0,
+                h: 0.0,
             },
+            anchor: Point2 { x: 0.5, y: 0.5 },
+            origin: Point2 { x: 0.5, y: 0.5 },
+            scale: Point2 { x: 1.0, y: 1.0 },
+            relative_size: Point2 { x: false, y: false },
         };
 
         self.age += delta;

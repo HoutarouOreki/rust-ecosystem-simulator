@@ -5,8 +5,6 @@ mod environment;
 mod layout_info;
 mod organisms;
 
-use std::collections::hash_map::RandomState;
-use std::collections::HashMap;
 use std::time::Duration;
 
 use configurations::generation_configuration::GenerationConfiguration;
@@ -15,10 +13,6 @@ use environment::Environment;
 use ggez::event::{self, EventHandler};
 use ggez::graphics::{self, Color};
 
-use ggez::input::keyboard::KeyboardContext;
-
-use ggez::mint::Point2;
-use ggez::winit::event::VirtualKeyCode;
 use ggez::{Context, ContextBuilder, GameResult};
 use organisms::species::Species;
 
@@ -39,14 +33,10 @@ fn main() {
     event::run(ctx, event_loop, my_game);
 }
 
-const CAMERA_SPEED: f32 = 200.0;
-const ZOOM_SPEED: f32 = 1.4;
-
 struct MyGame {
     time_since_last_simulation_step: Duration,
     time_per_step: Duration,
     environment: Environment,
-    key_dictionary: HashMap<VirtualKeyCode, [f32; 2], RandomState>,
 }
 
 impl MyGame {
@@ -56,62 +46,7 @@ impl MyGame {
             time_since_last_simulation_step: Duration::ZERO,
             environment: Environment::new(&generation_configuration),
             time_per_step: Duration::from_secs_f32(0.05),
-            key_dictionary: HashMap::from([
-                (VirtualKeyCode::Left, [1f32, 0f32]),
-                (VirtualKeyCode::Right, [-1f32, 0f32]),
-                (VirtualKeyCode::Up, [0f32, 1f32]),
-                (VirtualKeyCode::Down, [0f32, -1f32]),
-            ]),
         }
-    }
-
-    fn handle_camera_controls(&mut self, ctx: &Context) {
-        if ctx.keyboard.is_key_pressed(VirtualKeyCode::Plus) {
-            self.environment.zoom +=
-                self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
-        }
-        if ctx.keyboard.is_key_pressed(VirtualKeyCode::Minus) {
-            self.environment.zoom -=
-                self.environment.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
-        }
-
-        if self.environment.zoom.is_nan() {
-            self.environment.zoom = 1.0;
-        } else {
-            self.environment.zoom = self.environment.zoom.clamp(1.0, 10000.0);
-        }
-
-        let camera_moving_direction = self.direction_from_keyboard_state(&ctx.keyboard);
-
-        if camera_moving_direction == [0f32, 0f32] {
-            return;
-        }
-
-        let offset: [f32; 2] = vecmath::vec2_add(
-            [
-                self.environment.offset.x as f32,
-                self.environment.offset.y as f32,
-            ],
-            vecmath::vec2_scale(
-                vecmath::vec2_normalized(camera_moving_direction),
-                CAMERA_SPEED * ctx.time.delta().as_secs_f32(),
-            ),
-        );
-
-        self.environment.offset = Point2 {
-            x: offset[0] as i32,
-            y: offset[1] as i32,
-        };
-    }
-
-    fn direction_from_keyboard_state(&self, ctx: &KeyboardContext) -> [f32; 2] {
-        let mut direction = [0f32, 0f32];
-        for (key, vector) in &self.key_dictionary {
-            if ctx.is_key_pressed(*key) {
-                direction = vecmath::vec2_add(direction, *vector);
-            }
-        }
-        direction
     }
 }
 
@@ -173,7 +108,7 @@ impl EventHandler for MyGame {
             self.environment.simulate(self.time_per_step);
         }
 
-        self.handle_camera_controls(ctx);
+        self.environment.handle_camera_controls(ctx);
 
         Ok(())
     }
