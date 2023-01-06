@@ -3,7 +3,7 @@ use std::time::Duration;
 use super::shared_state::SharedState;
 
 pub trait OrganismState {
-    fn initialize(organism: &mut SharedState) -> Self
+    fn initialize(shared_state: &mut SharedState) -> Self
     where
         Self: Sized;
 

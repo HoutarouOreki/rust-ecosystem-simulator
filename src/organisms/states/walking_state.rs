@@ -11,8 +11,6 @@ use super::{
 
 const NEW_TARGET_DISTANCE: [f32; 2] = [1.0, 5.0];
 
-const WALKING_SPEED_PER_SECOND: f32 = 0.8;
-
 #[derive(Clone, Copy)]
 pub struct WalkingState {
     target: Point2<f32>,
@@ -26,7 +24,12 @@ impl OrganismState for WalkingState {
     }
 
     fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateTransition {
-        let new_pos = calculate_position(delta, shared_state.position, self.target);
+        let new_pos = calculate_position(
+            delta,
+            shared_state.position,
+            self.target,
+            shared_state.species.walk_speed_s,
+        );
         shared_state.position = new_pos;
         if new_pos.eq(&self.target) {
             return StateTransition::Next(Box::new(IdleState::initialize(shared_state)));
@@ -60,18 +63,17 @@ fn calculate_position(
     delta: Duration,
     current_pos: Point2<f32>,
     target: Point2<f32>,
+    walking_speed_s: f32,
 ) -> Point2<f32> {
     let to_target = vecmath::vec2_sub(target.into(), current_pos.into());
     let distance = vecmath::vec2_len(to_target);
 
-    if distance <= WALKING_SPEED_PER_SECOND * delta.as_secs_f32() {
+    if distance <= walking_speed_s * delta.as_secs_f32() {
         target
     } else {
         let direction_to_target = vecmath::vec2_normalized(to_target);
-        let direction_to_target_per_time = vecmath::vec2_scale(
-            direction_to_target,
-            WALKING_SPEED_PER_SECOND * delta.as_secs_f32(),
-        );
+        let direction_to_target_per_time =
+            vecmath::vec2_scale(direction_to_target, walking_speed_s * delta.as_secs_f32());
         vecmath::vec2_add(current_pos.into(), direction_to_target_per_time).into()
     }
 }

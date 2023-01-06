@@ -14,7 +14,6 @@ use crate::{layout_info::LayoutInfo, organisms::states::organism_state::StateTra
 use super::{
     species::Species,
     states::{idle_state::IdleState, organism_state::OrganismState, shared_state::SharedState},
-    walking_manager::WalkingManager,
 };
 
 static NEXT_ID: AtomicU64 = AtomicU64::new(0);
@@ -23,7 +22,6 @@ pub struct Organism {
     id: u64,
     age: Duration,
     layout_info: LayoutInfo,
-    walking_manager: Option<WalkingManager>,
     state: Box<dyn OrganismState>,
     shared_state: SharedState,
 }
@@ -68,12 +66,6 @@ impl Organism {
     }
 
     pub fn new(species: Species) -> Self {
-        let walking_manager = if species.can_walk {
-            Option::Some(WalkingManager::new())
-        } else {
-            Option::None
-        };
-
         NEXT_ID.fetch_add(1, Ordering::SeqCst);
 
         let mut layout_info = LayoutInfo::new();
@@ -91,7 +83,6 @@ impl Organism {
             id: NEXT_ID.load(Ordering::SeqCst),
             age: Duration::ZERO,
             layout_info,
-            walking_manager,
             shared_state,
             state: Box::new(IdleState::new()),
         }

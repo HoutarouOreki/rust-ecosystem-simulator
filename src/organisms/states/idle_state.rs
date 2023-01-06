@@ -2,8 +2,15 @@ use std::time::Duration;
 
 use rand::Rng;
 
+// these are u32 'cause Rng::gen_ratio supports u32
+const EAT_CHANCE: u32 = 4;
+const WALK_CHANCE: u32 = 2;
+const REPRODUCE_CHANCE: u32 = 7;
+
 use super::{
+    eating_state::EatingState,
     organism_state::{OrganismState, StateTransition},
+    reproducing_state::ReproducingState,
     shared_state::SharedState,
     walking_state::WalkingState,
 };
@@ -24,6 +31,47 @@ impl IdleState {
                 rand::thread_rng().gen_range(IDLE_TIME_S[0]..=IDLE_TIME_S[1]),
             ),
         }
+    }
+
+    fn total_chance(shared_state: &SharedState) -> u32 {
+        let mut sum = 0;
+
+        if shared_state.can_walk() {
+            sum += WALK_CHANCE;
+        }
+        if shared_state.can_reproduce() {
+            sum += REPRODUCE_CHANCE;
+        }
+        if shared_state.can_eat() {
+            sum += EAT_CHANCE;
+        }
+
+        sum
+    }
+
+    fn pick_new_state(
+        shared_state: &SharedState,
+    ) -> fn(&mut SharedState) -> Box<dyn OrganismState> {
+        let mut total_chance = Self::total_chance(shared_state);
+        let mut rng = rand::thread_rng();
+
+        if shared_state.can_walk() && rng.gen_ratio(WALK_CHANCE, total_chance) {
+            return |st| Box::new(WalkingState::initialize(st));
+        } else {
+            total_chance -= WALK_CHANCE;
+        }
+
+        if shared_state.can_eat() && rng.gen_ratio(EAT_CHANCE, total_chance) {
+            return |st| Box::new(EatingState::initialize(st));
+        } else {
+            total_chance -= EAT_CHANCE;
+        }
+
+        if shared_state.can_reproduce() && rng.gen_ratio(REPRODUCE_CHANCE, total_chance) {
+            return |st| Box::new(ReproducingState::initialize(st));
+        }
+
+        |st| Box::new(IdleState::initialize(st))
     }
 }
 
