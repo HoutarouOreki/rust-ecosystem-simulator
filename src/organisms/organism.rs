@@ -9,21 +9,23 @@ use ggez::{
     mint::Point2,
 };
 
-use crate::layout_info::LayoutInfo;
+use crate::{layout_info::LayoutInfo, organisms::states::organism_state::StateTransition};
 
-use super::{species::Species, walking_manager::WalkingManager};
+use super::{
+    species::Species,
+    states::{idle_state::IdleState, organism_state::OrganismState, shared_state::SharedState},
+    walking_manager::WalkingManager,
+};
 
 static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 
 pub struct Organism {
     id: u64,
-    position: Point2<f32>,
-    energy: u32,
-    health: u32,
     age: Duration,
-    species: Species,
     layout_info: LayoutInfo,
     walking_manager: Option<WalkingManager>,
+    state: Box<dyn OrganismState>,
+    shared_state: SharedState,
 }
 
 impl Organism {
@@ -41,13 +43,16 @@ impl Organism {
 
         let draw_param = DrawParam::default()
             .dest_rect(screen_rect)
-            .color(self.species.color);
+            .color(self.shared_state.species.color);
 
         canvas.draw(circle_mesh, draw_param)
     }
 
     pub fn eat(&mut self, amount: u32) {
-        self.energy = std::cmp::min(self.species.max_energy, self.energy + amount);
+        self.shared_state.energy = std::cmp::min(
+            self.shared_state.species.max_energy,
+            self.shared_state.energy + amount,
+        );
     }
 
     pub fn id(&self) -> u64 {
@@ -55,11 +60,11 @@ impl Organism {
     }
 
     pub fn is_alive(&self) -> bool {
-        self.age <= self.species.max_age
+        self.age <= self.shared_state.species.max_age
     }
 
     pub fn is_dead(&self) -> bool {
-        self.age > self.species.max_age
+        self.age > self.shared_state.species.max_age
     }
 
     pub fn new(species: Species) -> Self {
@@ -70,36 +75,43 @@ impl Organism {
         };
 
         NEXT_ID.fetch_add(1, Ordering::SeqCst);
+
         let mut layout_info = LayoutInfo::new();
         layout_info.raw_rect_in_parent.w = 0.5;
         layout_info.raw_rect_in_parent.h = 0.5;
-        Self {
-            id: NEXT_ID.load(Ordering::SeqCst),
+
+        let shared_state = SharedState {
             position: Point2 { x: 0.0, y: 0.0 },
             energy: species.max_energy,
             health: species.max_health,
-            age: Duration::ZERO,
             species,
+        };
+
+        Self {
+            id: NEXT_ID.load(Ordering::SeqCst),
+            age: Duration::ZERO,
             layout_info,
             walking_manager,
+            shared_state,
+            state: Box::new(IdleState::new()),
         }
     }
 
     pub fn position(&self) -> Point2<f32> {
-        self.position
+        self.shared_state.position
     }
 
     pub fn simulate(&mut self, delta: Duration) {
         assert!(!self.is_dead());
 
-        self.try_reproduce();
-        self.try_eat();
-        self.walking(delta);
+        if let StateTransition::Next(next_state) = self.state.run(&mut self.shared_state, delta) {
+            self.state = next_state;
+        }
 
         self.layout_info = LayoutInfo {
             raw_rect_in_parent: Rect {
-                x: self.position.x,
-                y: self.position.y,
+                x: self.shared_state.position.x,
+                y: self.shared_state.position.y,
                 w: 0.3,
                 h: 0.3,
             },
@@ -112,31 +124,11 @@ impl Organism {
         self.age += delta;
     }
 
-    pub(crate) fn try_eat(&self) {
-        //todo!()
-    }
-
-    pub(crate) fn try_reproduce(&self) {
-        //todo!()
-    }
-
-    fn walking(&mut self, delta: Duration) {
-        if self.walking_manager.is_none() {
-            return;
-        }
-
-        self.position = self
-            .walking_manager
-            .as_mut()
-            .unwrap()
-            .simulate_and_calculate_new_pos(self.position, delta);
-    }
-
     pub fn set_position(&mut self, position: Point2<f32>) {
-        self.position = position;
+        self.shared_state.position = position;
     }
 
     pub fn set_position_x_y(&mut self, x: f32, y: f32) {
-        self.position = Point2 { x, y };
+        self.shared_state.position = Point2 { x, y };
     }
 }

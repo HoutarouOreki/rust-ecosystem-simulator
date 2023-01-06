@@ -3,11 +3,10 @@ use std::time::Duration;
 use ggez::mint::Point2;
 use rand::Rng;
 
-use crate::organisms::organism::Organism;
-
 use super::{
     idle_state::IdleState,
     organism_state::{OrganismState, StateTransition},
+    shared_state::SharedState,
 };
 
 const NEW_TARGET_DISTANCE: [f32; 2] = [1.0, 5.0];
@@ -20,17 +19,17 @@ pub struct WalkingState {
 }
 
 impl OrganismState for WalkingState {
-    fn initialize(organism: &mut Organism) -> Self {
+    fn initialize(shared_state: &mut SharedState) -> Self {
         Self {
-            target: pick_random_target(organism.position()),
+            target: pick_random_target(shared_state.position),
         }
     }
 
-    fn run(&mut self, organism: &mut Organism, delta: Duration) -> StateTransition {
-        let new_pos = calculate_position(delta, organism.position(), self.target);
-        organism.set_position(new_pos);
+    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateTransition {
+        let new_pos = calculate_position(delta, shared_state.position, self.target);
+        shared_state.position = new_pos;
         if new_pos.eq(&self.target) {
-            return StateTransition::Next(Box::new(IdleState::initialize(organism)));
+            return StateTransition::Next(Box::new(IdleState::initialize(shared_state)));
         }
         StateTransition::Same
     }
