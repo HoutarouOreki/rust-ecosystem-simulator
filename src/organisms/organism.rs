@@ -40,7 +40,7 @@ impl Organism {
             .get_screen_rect(parent_screen_rect, parent_rect_scale);
 
         let draw_param = DrawParam::default()
-            .dest(screen_rect.point())
+            .dest_rect(screen_rect)
             .color(self.species.color);
 
         canvas.draw(circle_mesh, draw_param)
@@ -70,6 +70,9 @@ impl Organism {
         };
 
         NEXT_ID.fetch_add(1, Ordering::SeqCst);
+        let mut layout_info = LayoutInfo::new();
+        layout_info.raw_rect_in_parent.w = 0.5;
+        layout_info.raw_rect_in_parent.h = 0.5;
         Self {
             id: NEXT_ID.load(Ordering::SeqCst),
             position: Point2 { x: 0.0, y: 0.0 },
@@ -77,7 +80,7 @@ impl Organism {
             health: species.max_health,
             age: Duration::ZERO,
             species,
-            layout_info: LayoutInfo::new(),
+            layout_info,
             walking_manager,
         }
     }
@@ -97,8 +100,8 @@ impl Organism {
             raw_rect_in_parent: Rect {
                 x: self.position.x,
                 y: self.position.y,
-                w: 0.0,
-                h: 0.0,
+                w: 0.3,
+                h: 0.3,
             },
             anchor: Point2 { x: 0.5, y: 0.5 },
             origin: Point2 { x: 0.5, y: 0.5 },

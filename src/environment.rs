@@ -143,8 +143,8 @@ impl Environment {
             gfx,
             DrawMode::Fill(FillOptions::DEFAULT),
             Point2 { x: 0.0, y: 0.0 },
-            14.0,
-            1.,
+            0.5,
+            0.01,
             Color::WHITE,
         )
         .unwrap()
