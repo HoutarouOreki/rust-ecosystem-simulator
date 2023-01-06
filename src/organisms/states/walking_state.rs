@@ -5,7 +5,10 @@ use rand::Rng;
 
 use crate::organisms::organism::Organism;
 
-use super::{idle_state::IdleState, organism_state::OrganismState};
+use super::{
+    idle_state::IdleState,
+    organism_state::{OrganismState, StateTransition},
+};
 
 const NEW_TARGET_DISTANCE: [f32; 2] = [1.0, 5.0];
 
@@ -16,14 +19,6 @@ pub struct WalkingState {
     target: Point2<f32>,
 }
 
-impl WalkingState {
-    pub fn new() -> Self {
-        Self {
-            target: Point2 { x: 0.0, y: 0.0 },
-        }
-    }
-}
-
 impl OrganismState for WalkingState {
     fn initialize(organism: &mut Organism) -> Self {
         Self {
@@ -31,13 +26,13 @@ impl OrganismState for WalkingState {
         }
     }
 
-    fn run(&mut self, organism: &mut Organism, delta: Duration) -> Box<dyn OrganismState> {
+    fn run(&mut self, organism: &mut Organism, delta: Duration) -> StateTransition {
         let new_pos = calculate_position(delta, organism.position(), self.target);
         organism.set_position(new_pos);
         if new_pos.eq(&self.target) {
-            return Box::new(IdleState::initialize(organism));
+            return StateTransition::Next(Box::new(IdleState::initialize(organism)));
         }
-        Box::new(*self)
+        StateTransition::Same
     }
 }
 

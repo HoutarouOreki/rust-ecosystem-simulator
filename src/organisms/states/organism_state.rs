@@ -7,5 +7,10 @@ pub trait OrganismState {
     where
         Self: Sized;
 
-    fn run(&mut self, organism: &mut Organism, delta: Duration) -> Box<dyn OrganismState>;
+    fn run(&mut self, organism: &mut Organism, delta: Duration) -> StateTransition;
+}
+
+pub enum StateTransition {
+    Same,
+    Next(Box<dyn OrganismState>),
 }
