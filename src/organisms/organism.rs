@@ -12,6 +12,7 @@ use ggez::{
 use crate::{layout_info::LayoutInfo, organisms::states::organism_state::StateTransition};
 
 use super::{
+    organism_result::OrganismResult,
     species::Species,
     states::{idle_state::IdleState, organism_state::OrganismState, shared_state::SharedState},
 };
@@ -46,13 +47,6 @@ impl Organism {
         canvas.draw(circle_mesh, draw_param)
     }
 
-    pub fn eat(&mut self, amount: u32) {
-        self.shared_state.energy = std::cmp::min(
-            self.shared_state.species.max_energy,
-            self.shared_state.energy + amount,
-        );
-    }
-
     pub fn id(&self) -> u64 {
         self.id
     }
@@ -65,6 +59,12 @@ impl Organism {
         self.age > self.shared_state.species.max_age
     }
 
+    pub fn new_child(organism: &Organism) -> Self {
+        let mut new_child = Organism::new(organism.shared_state.species.clone());
+        new_child.set_position(organism.shared_state.position);
+        new_child
+    }
+
     pub fn new(species: Species) -> Self {
         NEXT_ID.fetch_add(1, Ordering::SeqCst);
 
@@ -72,12 +72,7 @@ impl Organism {
         layout_info.raw_rect_in_parent.w = 0.5;
         layout_info.raw_rect_in_parent.h = 0.5;
 
-        let shared_state = SharedState {
-            position: Point2 { x: 0.0, y: 0.0 },
-            energy: species.max_energy,
-            health: species.max_health,
-            species,
-        };
+        let shared_state = SharedState::new_default(species);
 
         Self {
             id: NEXT_ID.load(Ordering::SeqCst),
@@ -92,10 +87,14 @@ impl Organism {
         self.shared_state.position
     }
 
-    pub fn simulate(&mut self, delta: Duration) {
+    pub fn simulate(&mut self, delta: Duration) -> OrganismResult {
         assert!(!self.is_dead());
 
-        if let StateTransition::Next(next_state) = self.state.run(&mut self.shared_state, delta) {
+        self.shared_state
+            .increase_energy(self.shared_state.species.photosynthesis_rate_s * delta.as_secs_f32());
+
+        let state_run_result = self.state.run(&mut self.shared_state, delta);
+        if let StateTransition::Next(next_state) = state_run_result.state_transition {
             self.state = next_state;
         }
 
@@ -113,6 +112,8 @@ impl Organism {
         };
 
         self.age += delta;
+
+        state_run_result.organism_result
     }
 
     pub fn set_position(&mut self, position: Point2<f32>) {

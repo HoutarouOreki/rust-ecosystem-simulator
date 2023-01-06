@@ -1,5 +1,5 @@
 use std::{
-    collections::{hash_map::RandomState, HashMap},
+    collections::{hash_map::RandomState, HashMap, HashSet},
     time::Duration,
 };
 
@@ -16,8 +16,9 @@ use ggez::{
 use rand::{distributions::Uniform, prelude::Distribution};
 
 use crate::{
-    configurations::generation_configuration::GenerationConfiguration, layout_info::LayoutInfo,
-    organisms::organism::Organism,
+    configurations::generation_configuration::GenerationConfiguration,
+    layout_info::LayoutInfo,
+    organisms::{organism::Organism, organism_result::OrganismResult},
 };
 
 const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 10f32;
@@ -40,12 +41,39 @@ pub struct Environment {
 
 impl Environment {
     pub fn simulate(&mut self, delta: Duration) {
+        let mut to_add = Vec::new();
+        let mut to_remove = HashSet::new();
         for organism in self.organisms.iter_mut() {
-            organism.simulate(delta);
+            match Self::simulate_organism(organism, delta) {
+                OrganismsChange::Add(mut vec) => to_add.append(&mut vec),
+                OrganismsChange::Remove(id) => {
+                    to_remove.insert(id);
+                }
+                OrganismsChange::None => {}
+            };
         }
-        self.organisms.retain(|x| x.is_alive());
+        self.organisms
+            .retain(|x| x.is_alive() && !to_remove.contains(&x.id()));
+        self.organisms.append(&mut to_add);
         self.step += 1;
         self.time += delta;
+    }
+
+    fn simulate_organism(organism: &mut Organism, delta: Duration) -> OrganismsChange {
+        let result = organism.simulate(delta);
+        match result {
+            OrganismResult::HadChildren { amount } => {
+                let mut vec = Vec::new();
+                for _ in 0..amount {
+                    vec.push(Organism::new_child(organism));
+                }
+                OrganismsChange::Add(vec)
+            }
+            OrganismResult::AteOtherOrganism { other_organism_id } => {
+                OrganismsChange::Remove(other_organism_id)
+            }
+            OrganismResult::None => OrganismsChange::None,
+        }
     }
 
     pub fn new(generation_configuration: &GenerationConfiguration) -> Environment {
@@ -269,4 +297,10 @@ fn create_line(
     color: Color,
 ) -> Mesh {
     Mesh::new_line(gfx, &[point_a, point_b], 1.0, color).unwrap()
+}
+
+enum OrganismsChange {
+    Add(Vec<Organism>),
+    Remove(u64),
+    None,
 }

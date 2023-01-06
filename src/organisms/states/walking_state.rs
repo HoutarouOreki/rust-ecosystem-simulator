@@ -5,7 +5,7 @@ use rand::Rng;
 
 use super::{
     idle_state::IdleState,
-    organism_state::{OrganismState, StateTransition},
+    organism_state::{OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -23,7 +23,7 @@ impl OrganismState for WalkingState {
         }
     }
 
-    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateTransition {
+    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateRunResult {
         let new_pos = calculate_position(
             delta,
             shared_state.position,
@@ -31,10 +31,12 @@ impl OrganismState for WalkingState {
             shared_state.species.walk_speed_s,
         );
         shared_state.position = new_pos;
+
         if new_pos.eq(&self.target) {
-            return StateTransition::Next(Box::new(IdleState::initialize(shared_state)));
+            return StateRunResult::none_next(Box::new(IdleState::initialize(shared_state)));
         }
-        StateTransition::Same
+
+        StateRunResult::none_same()
     }
 }
 

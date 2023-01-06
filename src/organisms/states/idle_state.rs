@@ -9,7 +9,7 @@ const REPRODUCE_CHANCE: u32 = 7;
 
 use super::{
     eating_state::EatingState,
-    organism_state::{OrganismState, StateTransition},
+    organism_state::{OrganismState, StateRunResult},
     reproducing_state::ReproducingState,
     shared_state::SharedState,
     walking_state::WalkingState,
@@ -52,26 +52,32 @@ impl IdleState {
     fn pick_new_state(
         shared_state: &SharedState,
     ) -> fn(&mut SharedState) -> Box<dyn OrganismState> {
-        let mut total_chance = Self::total_chance(shared_state);
-        let mut rng = rand::thread_rng();
+        let total_chance = &mut Self::total_chance(shared_state);
 
-        if shared_state.can_walk() && rng.gen_ratio(WALK_CHANCE, total_chance) {
+        if shared_state.can_walk() && ratio(WALK_CHANCE, total_chance) {
             return |st| Box::new(WalkingState::initialize(st));
-        } else {
-            total_chance -= WALK_CHANCE;
         }
 
-        if shared_state.can_eat() && rng.gen_ratio(EAT_CHANCE, total_chance) {
+        if shared_state.can_eat() && ratio(EAT_CHANCE, total_chance) {
             return |st| Box::new(EatingState::initialize(st));
-        } else {
-            total_chance -= EAT_CHANCE;
         }
 
-        if shared_state.can_reproduce() && rng.gen_ratio(REPRODUCE_CHANCE, total_chance) {
+        if shared_state.can_reproduce() && ratio(REPRODUCE_CHANCE, total_chance) {
             return |st| Box::new(ReproducingState::initialize(st));
         }
 
         |st| Box::new(IdleState::initialize(st))
+    }
+}
+
+pub fn ratio(numerator: u32, denominator: &mut u32) -> bool {
+    if *denominator == 0 {
+        false
+    } else if rand::thread_rng().gen_ratio(numerator, *denominator) {
+        true
+    } else {
+        *denominator -= numerator;
+        false
     }
 }
 
@@ -80,12 +86,12 @@ impl OrganismState for IdleState {
         Self::new()
     }
 
-    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateTransition {
+    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateRunResult {
         self.duration += delta;
         if self.duration >= self.target_duration {
-            StateTransition::Next(Box::new(WalkingState::initialize(shared_state)))
+            StateRunResult::none_next(Self::pick_new_state(shared_state)(shared_state))
         } else {
-            StateTransition::Same
+            StateRunResult::none_same()
         }
     }
 }
