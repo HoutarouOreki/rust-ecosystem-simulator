@@ -10,7 +10,15 @@ pub struct Species {
     pub max_age: Duration,
     pub cost_of_birth: f32,
     pub walk_speed_s: f32,
-    pub can_eat_organisms: bool,
     pub photosynthesis_rate_s: f32,
     pub color: Color,
+    pub eats: Nutrition,
+    pub contained_nutrition: Nutrition,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Nutrition {
+    None,
+    Plant,
+    Meat,
 }

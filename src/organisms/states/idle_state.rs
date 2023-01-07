@@ -3,12 +3,12 @@ use std::time::Duration;
 use rand::Rng;
 
 // these are u32 'cause Rng::gen_ratio supports u32
-const EAT_CHANCE: u32 = 4;
+const HUNT_CHANCE: u32 = 6;
 const WALK_CHANCE: u32 = 2;
 const REPRODUCE_CHANCE: u32 = 7;
 
 use super::{
-    eating_state::EatingState,
+    hunting_state::HuntingState,
     organism_state::{OrganismState, StateRunResult},
     reproducing_state::ReproducingState,
     shared_state::SharedState,
@@ -33,6 +33,10 @@ impl IdleState {
         }
     }
 
+    pub fn new_boxed() -> Box<Self> {
+        Box::new(Self::new())
+    }
+
     fn total_chance(shared_state: &SharedState) -> u32 {
         let mut sum = 0;
 
@@ -42,8 +46,8 @@ impl IdleState {
         if shared_state.can_reproduce() {
             sum += REPRODUCE_CHANCE;
         }
-        if shared_state.can_eat() {
-            sum += EAT_CHANCE;
+        if shared_state.can_hunt() {
+            sum += HUNT_CHANCE;
         }
 
         sum
@@ -55,18 +59,18 @@ impl IdleState {
         let total_chance = &mut Self::total_chance(shared_state);
 
         if shared_state.can_walk() && ratio(WALK_CHANCE, total_chance) {
-            return |st| Box::new(WalkingState::initialize(st));
+            return |st| WalkingState::init_boxed(st);
         }
 
-        if shared_state.can_eat() && ratio(EAT_CHANCE, total_chance) {
-            return |st| Box::new(EatingState::initialize(st));
+        if shared_state.can_hunt() && ratio(HUNT_CHANCE, total_chance) {
+            return |st| HuntingState::init_boxed(st);
         }
 
         if shared_state.can_reproduce() && ratio(REPRODUCE_CHANCE, total_chance) {
-            return |st| Box::new(ReproducingState::initialize(st));
+            return |st| ReproducingState::init_boxed(st);
         }
 
-        |st| Box::new(IdleState::initialize(st))
+        |st| IdleState::init_boxed(st)
     }
 }
 

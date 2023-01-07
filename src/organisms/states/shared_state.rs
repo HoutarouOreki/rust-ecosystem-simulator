@@ -3,8 +3,9 @@ use std::time::Duration;
 
 use ggez::mint::Point2;
 
-use crate::organisms::species::Species;
+use crate::organisms::species::{Nutrition, Species};
 
+#[derive(Clone)]
 pub struct SharedState {
     pub position: Point2<f32>,
     age: Duration,
@@ -17,10 +18,21 @@ impl SharedState {
     pub fn new_default(species: Species) -> Self {
         Self {
             position: Point2 { x: 0.0, y: 0.0 },
-            energy: species.max_energy,
+            energy: 0.0,
             health: species.max_health,
             species,
             age: Duration::ZERO,
+        }
+    }
+
+    pub fn new_random(species: Species) -> Self {
+        let age = Duration::from_secs_f32(rand::random::<f32>() * species.max_age.as_secs_f32());
+        Self {
+            position: Point2 { x: 0.0, y: 0.0 },
+            energy: rand::random::<f32>() * species.max_energy,
+            health: species.max_health,
+            species,
+            age,
         }
     }
 
@@ -50,6 +62,10 @@ impl SharedState {
 
     pub fn can_eat(&self) -> bool {
         self.energy < self.species.max_energy
+    }
+
+    pub fn can_hunt(&self) -> bool {
+        self.can_eat() && self.species.eats != Nutrition::None
     }
 
     pub fn energy(&self) -> f32 {

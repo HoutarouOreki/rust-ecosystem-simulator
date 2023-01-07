@@ -17,7 +17,11 @@ use crate::{
 use super::{
     organism_result::OrganismResult,
     species::Species,
-    states::{idle_state::IdleState, organism_state::OrganismState, shared_state::SharedState},
+    states::{
+        idle_state::IdleState,
+        organism_state::{AwarenessOfOtherOrganism, OrganismState},
+        shared_state::SharedState,
+    },
 };
 
 static NEXT_ID: AtomicU64 = AtomicU64::new(0);
@@ -95,6 +99,12 @@ impl Organism {
         new_child
     }
 
+    pub fn new_randomized(species: Species) -> Self {
+        let mut s = Self::new(species.clone());
+        s.shared_state = SharedState::new_random(species);
+        s
+    }
+
     pub fn new(species: Species) -> Self {
         NEXT_ID.fetch_add(1, Ordering::SeqCst);
 
@@ -121,12 +131,21 @@ impl Organism {
         self.shared_state.position
     }
 
-    pub fn simulate(&mut self, delta: Duration) -> OrganismResult {
+    pub fn shared_state(&self) -> &SharedState {
+        &self.shared_state
+    }
+
+    pub fn simulate(
+        &mut self,
+        delta: Duration,
+        awareness_of_others: &Vec<AwarenessOfOtherOrganism>,
+    ) -> OrganismResult {
         assert!(!self.is_dead());
 
         self.shared_state
             .increase_energy(self.shared_state.species.photosynthesis_rate_s * delta.as_secs_f32());
 
+        self.state.make_aware_of_others(awareness_of_others);
         let state_run_result = self.state.run(&mut self.shared_state, delta);
         if let StateTransition::Next(next_state) = state_run_result.state_transition {
             self.state = next_state;

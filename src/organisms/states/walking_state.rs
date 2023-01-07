@@ -23,6 +23,25 @@ impl WalkingState {
         let to_target = vecmath::vec2_sub(self.target.into(), shared_state.position.into());
         vecmath::vec2_len(to_target)
     }
+
+    pub fn calculate_position(
+        delta: Duration,
+        current_pos: Point2<f32>,
+        target: Point2<f32>,
+        walking_speed_s: f32,
+    ) -> Point2<f32> {
+        let to_target = vecmath::vec2_sub(target.into(), current_pos.into());
+        let distance = vecmath::vec2_len(to_target);
+
+        if distance <= walking_speed_s * delta.as_secs_f32() {
+            target
+        } else {
+            let direction_to_target = vecmath::vec2_normalized(to_target);
+            let direction_to_target_per_time =
+                vecmath::vec2_scale(direction_to_target, walking_speed_s * delta.as_secs_f32());
+            vecmath::vec2_add(current_pos.into(), direction_to_target_per_time).into()
+        }
+    }
 }
 
 impl OrganismState for WalkingState {
@@ -33,7 +52,7 @@ impl OrganismState for WalkingState {
     }
 
     fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateRunResult {
-        let new_pos = calculate_position(
+        let new_pos = Self::calculate_position(
             delta,
             shared_state.position,
             self.target,
@@ -63,23 +82,4 @@ fn pick_random_target(current_pos: Point2<f32>) -> Point2<f32> {
     let new_target = vecmath::vec2_add(target_relative, current_pos.into());
 
     new_target.into()
-}
-
-fn calculate_position(
-    delta: Duration,
-    current_pos: Point2<f32>,
-    target: Point2<f32>,
-    walking_speed_s: f32,
-) -> Point2<f32> {
-    let to_target = vecmath::vec2_sub(target.into(), current_pos.into());
-    let distance = vecmath::vec2_len(to_target);
-
-    if distance <= walking_speed_s * delta.as_secs_f32() {
-        target
-    } else {
-        let direction_to_target = vecmath::vec2_normalized(to_target);
-        let direction_to_target_per_time =
-            vecmath::vec2_scale(direction_to_target, walking_speed_s * delta.as_secs_f32());
-        vecmath::vec2_add(current_pos.into(), direction_to_target_per_time).into()
-    }
 }

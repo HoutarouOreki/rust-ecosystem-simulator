@@ -19,7 +19,10 @@ use crate::{
     application_context::ApplicationContext,
     configurations::generation_configuration::GenerationConfiguration,
     layout_info::LayoutInfo,
-    organisms::{organism::Organism, organism_result::OrganismResult},
+    organisms::{
+        organism::Organism, organism_result::OrganismResult,
+        states::organism_state::AwarenessOfOtherOrganism,
+    },
     vector_helper,
 };
 
@@ -39,30 +42,36 @@ pub struct Environment {
     circle_mesh: Option<Mesh>,
     layout_info: LayoutInfo,
     key_dictionary: HashMap<VirtualKeyCode, [f32; 2], RandomState>,
+    to_add: Vec<Organism>,
+    to_remove: HashSet<u64>,
 }
 
 impl Environment {
     pub fn simulate(&mut self, delta: Duration) {
-        let mut to_add = Vec::new();
-        let mut to_remove = HashSet::new();
+        let awareness_of_others = create_awareness_of_others(&self.organisms);
+
         for organism in self.organisms.iter_mut() {
-            match Self::simulate_organism(organism, delta) {
-                OrganismsChange::Add(mut vec) => to_add.append(&mut vec),
+            match Self::simulate_organism(organism, delta, &awareness_of_others) {
+                OrganismsChange::Add(mut vec) => self.to_add.append(&mut vec),
                 OrganismsChange::Remove(id) => {
-                    to_remove.insert(id);
+                    self.to_remove.insert(id);
                 }
                 OrganismsChange::None => {}
             };
         }
         self.organisms
-            .retain(|x| x.is_alive() && !to_remove.contains(&x.id()));
-        self.organisms.append(&mut to_add);
+            .retain(|x| x.is_alive() && !self.to_remove.contains(&x.id()));
+        self.organisms.append(&mut self.to_add);
         self.step += 1;
         self.time += delta;
     }
 
-    fn simulate_organism(organism: &mut Organism, delta: Duration) -> OrganismsChange {
-        let result = organism.simulate(delta);
+    fn simulate_organism(
+        organism: &mut Organism,
+        delta: Duration,
+        awareness_of_others: &Vec<AwarenessOfOtherOrganism>,
+    ) -> OrganismsChange {
+        let result = organism.simulate(delta, awareness_of_others);
         match result {
             OrganismResult::HadChildren { amount } => {
                 let vec = create_organism_children(amount, organism);
@@ -93,6 +102,8 @@ impl Environment {
                 (VirtualKeyCode::Up, [0f32, 1f32]),
                 (VirtualKeyCode::Down, [0f32, -1f32]),
             ]),
+            to_add: Vec::new(),
+            to_remove: HashSet::new(),
         }
     }
 
@@ -109,7 +120,8 @@ impl Environment {
             let organisms_amount = (species_configuration.amount_per_meter * WORLD_SIZE) as u32;
 
             for _ in 0..organisms_amount {
-                let mut organism = Organism::new(species_configuration.species.to_owned());
+                let mut organism =
+                    Organism::new_randomized(species_configuration.species.to_owned());
                 organism.set_position_x_y(
                     coordinate_uniform.sample(&mut rng),
                     coordinate_uniform.sample(&mut rng),
@@ -172,12 +184,24 @@ impl Environment {
     }
 
     fn get_new_circle_mesh(gfx: &impl Has<GraphicsContext>) -> Mesh {
-        Mesh::new_circle(
+        // Mesh::new_circle(
+        //     gfx,
+        //     DrawMode::Fill(FillOptions::DEFAULT),
+        //     Point2 { x: 0.0, y: 0.0 },
+        //     0.2,
+        //     0.1,
+        //     Color::WHITE,
+        // )
+        let size = 0.4;
+        Mesh::new_rectangle(
             gfx,
             DrawMode::Fill(FillOptions::DEFAULT),
-            Point2 { x: 0.0, y: 0.0 },
-            0.5,
-            0.01,
+            Rect {
+                x: -size * 0.5,
+                y: -size * 0.5,
+                w: size,
+                h: size,
+            },
             Color::WHITE,
         )
         .unwrap()
@@ -316,6 +340,17 @@ fn create_line(
     color: Color,
 ) -> Mesh {
     Mesh::new_line(gfx, &[point_a, point_b], 1.0, color).unwrap()
+}
+
+fn create_awareness_of_others(organisms: &Vec<Organism>) -> Vec<AwarenessOfOtherOrganism> {
+    let mut vec = Vec::new();
+    vec.reserve_exact(organisms.len());
+
+    for organism in organisms {
+        vec.push(AwarenessOfOtherOrganism::new(organism));
+    }
+
+    vec
 }
 
 enum OrganismsChange {

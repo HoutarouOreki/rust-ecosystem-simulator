@@ -1,10 +1,15 @@
 use std::time::Duration;
 
-use crate::organisms::organism_result::OrganismResult;
+use ggez::mint::Point2;
+
+use crate::organisms::{organism::Organism, organism_result::OrganismResult, species::Nutrition};
 
 use super::shared_state::SharedState;
 
 pub trait OrganismState {
+    #![allow(clippy::ptr_arg)]
+    fn make_aware_of_others(&mut self, _awareness_of_others: &Vec<AwarenessOfOtherOrganism>) {}
+
     fn initialize(shared_state: &mut SharedState) -> Self
     where
         Self: Sized;
@@ -50,6 +55,26 @@ impl StateRunResult {
         Self {
             organism_result: OrganismResult::None,
             state_transition: StateTransition::Next(next_state),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct AwarenessOfOtherOrganism {
+    pub organism_id: u64,
+    pub position: Point2<f32>,
+    pub species_name: String,
+    pub looks_for: Nutrition,
+    pub contains_nutrition: Nutrition,
+}
+impl AwarenessOfOtherOrganism {
+    pub fn new(organism: &Organism) -> AwarenessOfOtherOrganism {
+        Self {
+            organism_id: organism.id(),
+            position: organism.position(),
+            species_name: organism.shared_state().species.name.clone(),
+            looks_for: organism.shared_state().species.eats,
+            contains_nutrition: organism.shared_state().species.contained_nutrition,
         }
     }
 }

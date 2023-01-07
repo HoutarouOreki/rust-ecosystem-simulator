@@ -18,7 +18,7 @@ use ggez::graphics::{self, BlendMode, Color};
 
 use ggez::winit::event::VirtualKeyCode;
 use ggez::{Context, ContextBuilder, GameResult};
-use organisms::species::Species;
+use organisms::species::{Nutrition, Species};
 
 fn main() {
     // Make a Context.
@@ -61,45 +61,48 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
         species: vec![
             SpeciesGenerationConfiguration {
                 species: Species {
-                    name: String::from("Test Species 1"),
+                    name: String::from("Herbivore"),
                     max_energy: 256.0,
                     max_health: 256.0,
                     max_age: Duration::from_secs(200),
-                    cost_of_birth: 60.0,
-                    walk_speed_s: 0.8,
-                    can_eat_organisms: true,
+                    cost_of_birth: 30.0,
+                    walk_speed_s: 0.2,
                     photosynthesis_rate_s: 0.0,
                     color: Color::from_rgb(0, 91, 150),
-                },
-                amount_per_meter: 0.2,
-            },
-            SpeciesGenerationConfiguration {
-                species: Species {
-                    name: String::from("Test Species 2"),
-                    max_energy: 30.0,
-                    max_health: 30.0,
-                    max_age: Duration::from_secs(15),
-                    cost_of_birth: 20.0,
-                    walk_speed_s: 0.0,
-                    can_eat_organisms: false,
-                    photosynthesis_rate_s: 1.0,
-                    color: Color::from_rgb(79, 121, 66),
-                },
-                amount_per_meter: 0.7,
-            },
-            SpeciesGenerationConfiguration {
-                species: Species {
-                    name: String::from("Short-lived species"),
-                    max_energy: 30.0,
-                    max_health: 30.0,
-                    max_age: Duration::from_secs(5),
-                    cost_of_birth: 2.0,
-                    walk_speed_s: 0.8,
-                    can_eat_organisms: true,
-                    photosynthesis_rate_s: 0.0,
-                    color: Color::from_rgb(200, 0, 0),
+                    contained_nutrition: Nutrition::Meat,
+                    eats: Nutrition::Plant,
                 },
                 amount_per_meter: 0.1,
+            },
+            SpeciesGenerationConfiguration {
+                species: Species {
+                    name: String::from("Plant"),
+                    max_energy: 80.0,
+                    max_health: 30.0,
+                    max_age: Duration::from_secs(19),
+                    cost_of_birth: 10.0,
+                    walk_speed_s: 0.0,
+                    photosynthesis_rate_s: 3.0,
+                    color: Color::from_rgb(79, 121, 66),
+                    contained_nutrition: Nutrition::Plant,
+                    eats: Nutrition::None,
+                },
+                amount_per_meter: 0.16,
+            },
+            SpeciesGenerationConfiguration {
+                species: Species {
+                    name: String::from("Carnivore"),
+                    max_energy: 30.0,
+                    max_health: 30.0,
+                    max_age: Duration::from_secs(64),
+                    cost_of_birth: 12.0,
+                    walk_speed_s: 2.8,
+                    photosynthesis_rate_s: 0.0,
+                    color: Color::from_rgb(200, 0, 0),
+                    contained_nutrition: Nutrition::Meat,
+                    eats: Nutrition::Meat,
+                },
+                amount_per_meter: 0.01,
             },
         ],
     }
