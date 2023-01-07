@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+pub mod application_context;
 mod configurations;
 mod environment;
 mod layout_info;
@@ -7,12 +8,14 @@ mod organisms;
 
 use std::time::Duration;
 
+use application_context::ApplicationContext;
 use configurations::generation_configuration::GenerationConfiguration;
 use configurations::species_generation_configuration::SpeciesGenerationConfiguration;
 use environment::Environment;
 use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, Color};
+use ggez::graphics::{self, BlendMode, Color};
 
+use ggez::winit::event::VirtualKeyCode;
 use ggez::{Context, ContextBuilder, GameResult};
 use organisms::species::Species;
 
@@ -37,6 +40,7 @@ struct MyGame {
     time_since_last_simulation_step: Duration,
     time_per_step: Duration,
     environment: Environment,
+    application_context: ApplicationContext,
 }
 
 impl MyGame {
@@ -46,6 +50,7 @@ impl MyGame {
             time_since_last_simulation_step: Duration::ZERO,
             environment: Environment::new(&generation_configuration),
             time_per_step: Duration::from_secs_f32(0.05),
+            application_context: ApplicationContext::default(),
         }
     }
 }
@@ -110,13 +115,22 @@ impl EventHandler for MyGame {
 
         self.environment.handle_camera_controls(ctx);
 
+        if ctx.keyboard.is_key_just_pressed(VirtualKeyCode::H) {
+            self.application_context.draw_each_organism_info =
+                !self.application_context.draw_each_organism_info;
+        }
+
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas = graphics::Canvas::from_frame(ctx, Color::BLACK);
 
-        self.environment.draw(&mut canvas, ctx);
+        canvas.set_blend_mode(BlendMode::REPLACE);
+        canvas.set_premultiplied_text(false);
+
+        self.environment
+            .draw(&mut canvas, ctx, &self.application_context);
 
         canvas.finish(ctx)
     }

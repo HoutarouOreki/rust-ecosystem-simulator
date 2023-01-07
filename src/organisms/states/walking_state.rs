@@ -16,6 +16,13 @@ pub struct WalkingState {
     target: Point2<f32>,
 }
 
+impl WalkingState {
+    fn get_distance(&self, shared_state: &SharedState) -> f32 {
+        let to_target = vecmath::vec2_sub(self.target.into(), shared_state.position.into());
+        vecmath::vec2_len(to_target)
+    }
+}
+
 impl OrganismState for WalkingState {
     fn initialize(shared_state: &mut SharedState) -> Self {
         Self {
@@ -37,6 +44,10 @@ impl OrganismState for WalkingState {
         }
 
         StateRunResult::none_same()
+    }
+
+    fn name(&self, shared_state: &SharedState) -> String {
+        format!("walking ({:.2}m)", self.get_distance(shared_state))
     }
 }
 

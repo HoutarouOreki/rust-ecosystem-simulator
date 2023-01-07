@@ -94,4 +94,11 @@ impl OrganismState for IdleState {
             StateRunResult::none_same()
         }
     }
+
+    fn name(&self, _shared_state: &SharedState) -> String {
+        format!(
+            "idling ({:.0}%)",
+            self.duration.as_secs_f32() / self.target_duration.as_secs_f32() * 100.0
+        )
+    }
 }

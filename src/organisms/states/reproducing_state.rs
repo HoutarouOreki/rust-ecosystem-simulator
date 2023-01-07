@@ -5,7 +5,10 @@ use crate::organisms::{
     states::{idle_state::IdleState, organism_state::StateTransition},
 };
 
-use super::organism_state::{OrganismState, StateRunResult};
+use super::{
+    organism_state::{OrganismState, StateRunResult},
+    shared_state::SharedState,
+};
 
 const REPRODUCING_DURATION_S: f32 = 4.0;
 
@@ -40,5 +43,13 @@ impl OrganismState for ReproducingState {
 
         self.time_left -= delta;
         StateRunResult::none_same()
+    }
+
+    fn name(&self, _shared_state: &SharedState) -> String {
+        format!(
+            "reproducing ({:.0}%)",
+            100.0 * (REPRODUCING_DURATION_S - self.time_left.as_secs_f32())
+                / REPRODUCING_DURATION_S
+        )
     }
 }

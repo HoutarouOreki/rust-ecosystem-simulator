@@ -16,6 +16,7 @@ use ggez::{
 use rand::{distributions::Uniform, prelude::Distribution};
 
 use crate::{
+    application_context::ApplicationContext,
     configurations::generation_configuration::GenerationConfiguration,
     layout_info::LayoutInfo,
     organisms::{organism::Organism, organism_result::OrganismResult},
@@ -122,7 +123,12 @@ impl Environment {
         organisms
     }
 
-    pub fn draw(&mut self, canvas: &mut Canvas, gfx: &impl Has<GraphicsContext>) {
+    pub fn draw(
+        &mut self,
+        canvas: &mut Canvas,
+        gfx: &impl Has<GraphicsContext>,
+        application_context: &ApplicationContext,
+    ) {
         let display_screen_rect = canvas.screen_coordinates().unwrap();
 
         let zoom_container = LayoutInfo {
@@ -156,6 +162,7 @@ impl Environment {
                 canvas,
                 gfx,
                 circle_mesh,
+                application_context,
             );
         }
 

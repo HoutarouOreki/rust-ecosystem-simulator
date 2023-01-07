@@ -5,11 +5,14 @@ use std::{
 
 use ggez::{
     context::Has,
-    graphics::{Canvas, DrawParam, GraphicsContext, Mesh, Rect},
+    graphics::{Canvas, DrawParam, GraphicsContext, Mesh, Rect, Text},
     mint::Point2,
 };
 
-use crate::{layout_info::LayoutInfo, organisms::states::organism_state::StateTransition};
+use crate::{
+    application_context::ApplicationContext, layout_info::LayoutInfo,
+    organisms::states::organism_state::StateTransition,
+};
 
 use super::{
     organism_result::OrganismResult,
@@ -25,6 +28,7 @@ pub struct Organism {
     layout_info: LayoutInfo,
     state: Box<dyn OrganismState>,
     shared_state: SharedState,
+    info_text: Text,
 }
 
 impl Organism {
@@ -35,16 +39,34 @@ impl Organism {
         canvas: &mut Canvas,
         _gfx: &impl Has<GraphicsContext>,
         circle_mesh: &Mesh,
+        application_context: &ApplicationContext,
     ) {
         let screen_rect = self
             .layout_info
             .get_screen_rect(parent_screen_rect, parent_rect_scale);
 
+        if !screen_rect.overlaps(&canvas.screen_coordinates().unwrap()) {
+            return;
+        }
+
         let draw_param = DrawParam::default()
             .dest_rect(screen_rect)
             .color(self.shared_state.species.color);
 
-        canvas.draw(circle_mesh, draw_param)
+        canvas.draw(circle_mesh, draw_param);
+
+        if application_context.draw_each_organism_info {
+            self.draw_info_text(screen_rect, canvas);
+        }
+    }
+
+    fn draw_info_text(&self, screen_rect: Rect, canvas: &mut Canvas) {
+        let text_scale = 0.7;
+        let text_param = DrawParam::default()
+            .dest(screen_rect.point())
+            .scale([text_scale, text_scale]);
+
+        canvas.draw(&self.info_text, text_param);
     }
 
     pub fn id(&self) -> u64 {
@@ -74,12 +96,17 @@ impl Organism {
 
         let shared_state = SharedState::new_default(species);
 
+        let mut info_text = Text::new("");
+        info_text.set_wrap(false);
+        info_text.set_bounds([2000.0, 2000.0]);
+
         Self {
             id: NEXT_ID.load(Ordering::SeqCst),
             age: Duration::ZERO,
             layout_info,
             shared_state,
             state: Box::new(IdleState::new()),
+            info_text,
         }
     }
 
@@ -113,6 +140,8 @@ impl Organism {
 
         self.age += delta;
 
+        self.info_text.fragments_mut()[0].text = self.get_info_text();
+
         state_run_result.organism_result
     }
 
@@ -122,5 +151,12 @@ impl Organism {
 
     pub fn set_position_x_y(&mut self, x: f32, y: f32) {
         self.shared_state.position = Point2 { x, y };
+    }
+
+    pub fn get_info_text(&self) -> String {
+        let mut s = String::with_capacity(250);
+        s += &self.state.name(&self.shared_state);
+
+        s
     }
 }

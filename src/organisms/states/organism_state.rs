@@ -17,6 +17,8 @@ pub trait OrganismState {
     {
         Box::new(Self::initialize(shared_state))
     }
+
+    fn name(&self, shared_state: &SharedState) -> String;
 }
 
 pub enum StateTransition {

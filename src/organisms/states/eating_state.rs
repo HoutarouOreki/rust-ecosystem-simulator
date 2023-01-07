@@ -32,4 +32,11 @@ impl OrganismState for EatingState {
         self.time_remaining -= delta;
         StateRunResult::none_same()
     }
+
+    fn name(&self, _shared_state: &SharedState) -> String {
+        format!(
+            "eating ({:.0}%)",
+            100.0 * (EATING_DURATION_S - self.time_remaining.as_secs_f32()) / EATING_DURATION_S
+        )
+    }
 }
