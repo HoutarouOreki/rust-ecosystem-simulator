@@ -60,8 +60,8 @@ impl SharedState {
         self.energy = f32::min(self.species.max_energy, self.energy + amount);
     }
 
-    pub fn increase_age(&mut self) {
-        self.age += Duration::from_secs(1);
+    pub fn increase_age(&mut self, delta: Duration) {
+        self.age += delta;
     }
 
     pub fn age(&self) -> Duration {

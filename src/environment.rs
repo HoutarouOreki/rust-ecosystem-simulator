@@ -20,6 +20,7 @@ use crate::{
     configurations::generation_configuration::GenerationConfiguration,
     layout_info::LayoutInfo,
     organisms::{organism::Organism, organism_result::OrganismResult},
+    vector_helper,
 };
 
 const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 10f32;
@@ -64,10 +65,7 @@ impl Environment {
         let result = organism.simulate(delta);
         match result {
             OrganismResult::HadChildren { amount } => {
-                let mut vec = Vec::new();
-                for _ in 0..amount {
-                    vec.push(Organism::new_child(organism));
-                }
+                let vec = create_organism_children(amount, organism);
                 OrganismsChange::Add(vec)
             }
             OrganismResult::AteOtherOrganism { other_organism_id } => {
@@ -263,6 +261,20 @@ impl Environment {
         }
         direction
     }
+}
+
+fn create_organism_children(amount: u64, organism: &Organism) -> Vec<Organism> {
+    let mut vec = Vec::new();
+
+    let angle = rand::random::<f32>() * std::f32::consts::TAU;
+    let angle_increase = std::f32::consts::TAU / amount as f32;
+    for i in 0..amount {
+        let away_vector =
+            vector_helper::create_direction_vector(angle + (angle_increase * i as f32));
+        let child = Organism::new_child_away(organism, away_vector);
+        vec.push(child);
+    }
+    vec
 }
 
 fn create_vertical_horizontal_lines(

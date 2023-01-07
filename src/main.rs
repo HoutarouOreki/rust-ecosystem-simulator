@@ -5,6 +5,7 @@ mod configurations;
 mod environment;
 mod layout_info;
 mod organisms;
+pub mod vector_helper;
 
 use std::time::Duration;
 
@@ -77,7 +78,7 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
                     name: String::from("Test Species 2"),
                     max_energy: 30.0,
                     max_health: 30.0,
-                    max_age: Duration::from_secs(9000),
+                    max_age: Duration::from_secs(15),
                     cost_of_birth: 20.0,
                     walk_speed_s: 0.0,
                     can_eat_organisms: false,

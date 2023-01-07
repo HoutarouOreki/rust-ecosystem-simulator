@@ -86,6 +86,15 @@ impl Organism {
         new_child
     }
 
+    pub fn new_child_away(organism: &Organism, away_vector: [f32; 2]) -> Self {
+        let away_vector = vecmath::vec2_scale(away_vector, 0.2);
+        let mut new_child = Organism::new(organism.shared_state.species.clone());
+        new_child.set_position(
+            vecmath::vec2_add(organism.shared_state.position.into(), away_vector).into(),
+        );
+        new_child
+    }
+
     pub fn new(species: Species) -> Self {
         NEXT_ID.fetch_add(1, Ordering::SeqCst);
 
@@ -136,7 +145,7 @@ impl Organism {
             relative_size: Point2 { x: false, y: false },
         };
 
-        self.shared_state.increase_age();
+        self.shared_state.increase_age(delta);
 
         self.set_display_text();
 

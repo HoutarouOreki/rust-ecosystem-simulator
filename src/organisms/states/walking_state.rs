@@ -3,6 +3,8 @@ use std::time::Duration;
 use ggez::mint::Point2;
 use rand::Rng;
 
+use crate::vector_helper;
+
 use super::{
     idle_state::IdleState,
     organism_state::{OrganismState, StateRunResult},
@@ -56,20 +58,11 @@ fn pick_random_target(current_pos: Point2<f32>) -> Point2<f32> {
         rand::thread_rng().gen_range(NEW_TARGET_DISTANCE[0]..=NEW_TARGET_DISTANCE[1]);
     let angle = rand::thread_rng().gen_range(0f32..std::f32::consts::TAU); // 0 to 360 but in radians
 
-    let direction_vector = create_direction_vector(angle);
+    let direction_vector = vector_helper::create_direction_vector(angle);
     let target_relative = vecmath::vec2_scale(direction_vector, distance);
     let new_target = vecmath::vec2_add(target_relative, current_pos.into());
 
     new_target.into()
-}
-
-fn create_direction_vector(angle: f32) -> [f32; 2] {
-    let forward_vector = vecmath::vec2_normalized([0f32, 1f32]);
-
-    [
-        forward_vector[0] * angle.cos() - forward_vector[1] * angle.sin(),
-        forward_vector[0] * angle.sin() + forward_vector[1] * angle.cos(),
-    ]
 }
 
 fn calculate_position(
