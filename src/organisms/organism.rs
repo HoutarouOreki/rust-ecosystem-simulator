@@ -24,7 +24,6 @@ static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 
 pub struct Organism {
     id: u64,
-    age: Duration,
     layout_info: LayoutInfo,
     state: Box<dyn OrganismState>,
     shared_state: SharedState,
@@ -74,11 +73,11 @@ impl Organism {
     }
 
     pub fn is_alive(&self) -> bool {
-        self.age <= self.shared_state.species.max_age
+        self.shared_state.age() <= self.shared_state.species.max_age
     }
 
     pub fn is_dead(&self) -> bool {
-        self.age > self.shared_state.species.max_age
+        self.shared_state.age() > self.shared_state.species.max_age
     }
 
     pub fn new_child(organism: &Organism) -> Self {
@@ -97,12 +96,11 @@ impl Organism {
         let shared_state = SharedState::new_default(species);
 
         let mut info_text = Text::new("");
-        info_text.set_wrap(false);
-        info_text.set_bounds([2000.0, 2000.0]);
+        info_text.set_wrap(true);
+        info_text.set_bounds([300.0, 300.0]);
 
         Self {
             id: NEXT_ID.load(Ordering::SeqCst),
-            age: Duration::ZERO,
             layout_info,
             shared_state,
             state: Box::new(IdleState::new()),
@@ -138,11 +136,17 @@ impl Organism {
             relative_size: Point2 { x: false, y: false },
         };
 
-        self.age += delta;
+        self.shared_state.increase_age();
 
-        self.info_text.fragments_mut()[0].text = self.get_info_text();
+        self.set_display_text();
 
         state_run_result.organism_result
+    }
+
+    fn set_display_text(&mut self) {
+        let fragments = self.info_text.fragments_mut();
+        let text = Self::get_info_text(self.state.as_ref(), &self.shared_state);
+        fragments[0].text = text;
     }
 
     pub fn set_position(&mut self, position: Point2<f32>) {
@@ -153,9 +157,13 @@ impl Organism {
         self.shared_state.position = Point2 { x, y };
     }
 
-    pub fn get_info_text(&self) -> String {
-        let mut s = String::with_capacity(250);
-        s += &self.state.name(&self.shared_state);
+    pub fn get_info_text(state: &dyn OrganismState, shared_state: &SharedState) -> String {
+        let s = format!(
+            "{}\r\nage: {}/{}",
+            state.name(shared_state),
+            shared_state.age().as_secs(),
+            shared_state.species.max_age.as_secs()
+        );
 
         s
     }
