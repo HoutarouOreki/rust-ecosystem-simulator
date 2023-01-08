@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use super::{
-    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult},
+    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -29,7 +29,7 @@ impl OrganismState for DeadState {
         &mut self,
         _shared_state: &mut SharedState,
         _deltaa: Duration,
-        _awareness_of_others: &[AwarenessOfOtherOrganism],
+        _foreigners_info: &[ForeignerInfo],
     ) -> StateRunResult {
         StateRunResult::none_same()
     }

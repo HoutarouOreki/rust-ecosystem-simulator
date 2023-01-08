@@ -21,8 +21,7 @@ use crate::{
     configurations::generation_configuration::GenerationConfiguration,
     layout_info::LayoutInfo,
     organisms::{
-        organism::Organism, organism_result::OrganismResult,
-        states::organism_state::AwarenessOfOtherOrganism,
+        organism::Organism, organism_result::OrganismResult, states::organism_state::ForeignerInfo,
     },
     vector_helper,
 };
@@ -47,18 +46,18 @@ pub struct Environment {
     to_remove: HashSet<u64>,
     organisms_mesh: InstanceArray,
     vertical_horizontal_lines: Option<(Mesh, Mesh)>,
-    awareness_of_others: Vec<AwarenessOfOtherOrganism>,
+    foreigners_info: Vec<ForeignerInfo>,
     organism_counter: HashMap<String, u32>,
 }
 
 impl Environment {
     pub fn simulate(&mut self, delta: Duration, application_context: &ApplicationContext) {
-        recreate_awareness_of_others(&self.organisms, &mut self.awareness_of_others);
+        recreate_foreigners_info(&self.organisms, &mut self.foreigners_info);
         for organism in self.organisms.iter_mut() {
             match Self::simulate_organism(
                 organism,
                 delta,
-                &self.awareness_of_others,
+                &self.foreigners_info,
                 application_context,
             ) {
                 OrganismsChange::Add(mut vec) => {
@@ -96,10 +95,10 @@ impl Environment {
     fn simulate_organism(
         organism: &mut Organism,
         delta: Duration,
-        awareness_of_others: &[AwarenessOfOtherOrganism],
+        foreigners_info: &[ForeignerInfo],
         application_context: &ApplicationContext,
     ) -> OrganismsChange {
-        let result = organism.simulate(delta, awareness_of_others, application_context);
+        let result = organism.simulate(delta, foreigners_info, application_context);
         match result {
             OrganismResult::HadChildren { amount } => {
                 let vec = create_organism_children(amount, organism);
@@ -144,7 +143,7 @@ impl Environment {
             to_remove: HashSet::new(),
             organisms_mesh: InstanceArray::new(&ctx.gfx, Option::None),
             vertical_horizontal_lines: Option::None,
-            awareness_of_others: Vec::new(),
+            foreigners_info: Vec::new(),
             organism_counter,
         }
     }
@@ -437,13 +436,10 @@ fn create_line(
     Mesh::new_line(gfx, &[point_a, point_b], 1.0, color).unwrap()
 }
 
-fn recreate_awareness_of_others(
-    organisms: &Vec<Organism>,
-    awareness_of_others: &mut Vec<AwarenessOfOtherOrganism>,
-) {
-    awareness_of_others.clear();
+fn recreate_foreigners_info(organisms: &Vec<Organism>, foreigners_info: &mut Vec<ForeignerInfo>) {
+    foreigners_info.clear();
     for organism in organisms {
-        awareness_of_others.push(AwarenessOfOtherOrganism::new(organism));
+        foreigners_info.push(ForeignerInfo::new(organism));
     }
 }
 

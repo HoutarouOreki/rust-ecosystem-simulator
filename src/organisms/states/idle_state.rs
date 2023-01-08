@@ -9,7 +9,7 @@ const REPRODUCE_CHANCE: u32 = 54;
 
 use super::{
     hunting_state::HuntingState,
-    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult},
+    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
     reproducing_state::ReproducingState,
     shared_state::SharedState,
     walking_state::WalkingState,
@@ -94,7 +94,7 @@ impl OrganismState for IdleState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        _awareness_of_others: &[AwarenessOfOtherOrganism],
+        _foreigners_info: &[ForeignerInfo],
     ) -> StateRunResult {
         self.duration += delta;
         if self.duration >= self.target_duration {

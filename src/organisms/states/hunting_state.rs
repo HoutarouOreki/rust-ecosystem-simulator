@@ -6,7 +6,7 @@ use crate::{organisms::organism_result::OrganismResult, vector_helper};
 
 use super::{
     eating_state::EatingState,
-    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult, StateTransition},
+    organism_state::{ForeignerInfo, OrganismState, StateRunResult, StateTransition},
     shared_state::SharedState,
     walking_state::WalkingState,
 };
@@ -22,48 +22,44 @@ impl HuntingState {
     fn pick_new_target(
         &self,
         shared_state: &SharedState,
-        awareness_of_others: &[AwarenessOfOtherOrganism],
+        foreigners_info: &[ForeignerInfo],
     ) -> Option<(u64, Point2<f32>)> {
         let mut index_of_closest: Option<usize> = Option::None;
         let mut closest_position: Option<Point2<f32>> = Option::None;
 
-        for (i, awareness_of_other) in awareness_of_others.iter().enumerate() {
-            if awareness_of_other.species_name == shared_state.species.name
-                || awareness_of_other.contains_nutrition != shared_state.species.eats
+        for (i, foreigner_info) in foreigners_info.iter().enumerate() {
+            if foreigner_info.species_name == shared_state.species.name
+                || foreigner_info.contains_nutrition != shared_state.species.eats
             {
                 continue;
             }
 
-            if !Self::is_close_enough(shared_state, awareness_of_other) {
+            if !Self::is_close_enough(shared_state, foreigner_info) {
                 continue;
             }
             if index_of_closest.is_none() {
                 index_of_closest = Some(i);
-                closest_position = Some(awareness_of_other.position)
+                closest_position = Some(foreigner_info.position)
             } else if Self::is_closer_than(
                 shared_state.position,
-                awareness_of_other.position,
+                foreigner_info.position,
                 closest_position.unwrap(),
             ) {
                 index_of_closest = Some(i);
-                closest_position = Some(awareness_of_other.position);
+                closest_position = Some(foreigner_info.position);
             }
         }
 
         if let Some(i) = index_of_closest {
-            let closest: &AwarenessOfOtherOrganism = awareness_of_others.get(i).unwrap();
+            let closest: &ForeignerInfo = foreigners_info.get(i).unwrap();
             Option::Some((closest.organism_id, closest.position))
         } else {
             Option::None
         }
     }
 
-    fn is_close_enough(
-        shared_state: &SharedState,
-        awareness_of_other: &AwarenessOfOtherOrganism,
-    ) -> bool {
-        vector_helper::distance(shared_state.position, awareness_of_other.position)
-            <= SEEING_DISTANCE
+    fn is_close_enough(shared_state: &SharedState, foreigner_info: &ForeignerInfo) -> bool {
+        vector_helper::distance(shared_state.position, foreigner_info.position) <= SEEING_DISTANCE
     }
 
     fn is_closer_than(
@@ -75,8 +71,8 @@ impl HuntingState {
             < vector_helper::distance(my_position, than_current)
     }
 
-    fn check_if_still_exists(id: u64, organisms_awareness: &[AwarenessOfOtherOrganism]) -> bool {
-        organisms_awareness.iter().any(|x| x.organism_id == id)
+    fn check_if_still_exists(id: u64, foreigners_info: &[ForeignerInfo]) -> bool {
+        foreigners_info.iter().any(|x| x.organism_id == id)
     }
 
     fn hunt_organism(
@@ -84,13 +80,13 @@ impl HuntingState {
         shared_state: &mut SharedState,
         hunted_position: Point2<f32>,
         hunted_id: u64,
-        awareness_of_others: &[AwarenessOfOtherOrganism],
+        foreigners_info: &[ForeignerInfo],
         delta: Duration,
     ) -> StateRunResult {
         if vector_helper::distance(shared_state.position, hunted_position) < DISTANCE_TO_EAT {
-            if !Self::check_if_still_exists(hunted_id, awareness_of_others) {
+            if !Self::check_if_still_exists(hunted_id, foreigners_info) {
                 self.hunted_organism_id_position =
-                    self.pick_new_target(shared_state, awareness_of_others);
+                    self.pick_new_target(shared_state, foreigners_info);
                 return StateRunResult::none_same();
             }
             StateRunResult {
@@ -120,10 +116,10 @@ impl OrganismState for HuntingState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        awareness_of_others: &[AwarenessOfOtherOrganism],
+        foreigners_info: &[ForeignerInfo],
     ) -> StateRunResult {
         if self.hunted_organism_id_position.is_none() {
-            let new_target = self.pick_new_target(shared_state, awareness_of_others);
+            let new_target = self.pick_new_target(shared_state, foreigners_info);
             if new_target.is_none() {
                 return StateRunResult::none_next(WalkingState::init_boxed(shared_state));
             }
@@ -135,7 +131,7 @@ impl OrganismState for HuntingState {
                 shared_state,
                 hunted_position,
                 hunted_id,
-                awareness_of_others,
+                foreigners_info,
                 delta,
             )
         } else {

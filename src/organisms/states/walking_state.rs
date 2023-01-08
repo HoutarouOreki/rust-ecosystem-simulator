@@ -7,7 +7,7 @@ use crate::vector_helper;
 
 use super::{
     idle_state::IdleState,
-    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult},
+    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -55,7 +55,7 @@ impl OrganismState for WalkingState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        _awareness_of_others: &[AwarenessOfOtherOrganism],
+        _foreigners_info: &[ForeignerInfo],
     ) -> StateRunResult {
         let new_pos = Self::calculate_position(
             delta,

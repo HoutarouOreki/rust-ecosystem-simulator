@@ -15,7 +15,7 @@ pub trait OrganismState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        awareness_of_others: &[AwarenessOfOtherOrganism],
+        foreigners_info: &[ForeignerInfo],
     ) -> StateRunResult;
 
     fn init_boxed(shared_state: &mut SharedState) -> Box<Self>
@@ -62,15 +62,15 @@ impl StateRunResult {
 }
 
 #[derive(Clone)]
-pub struct AwarenessOfOtherOrganism {
+pub struct ForeignerInfo {
     pub organism_id: u64,
     pub position: Point2<f32>,
     pub species_name: String,
     pub looks_for: Nutrition,
     pub contains_nutrition: Nutrition,
 }
-impl AwarenessOfOtherOrganism {
-    pub fn new(organism: &Organism) -> AwarenessOfOtherOrganism {
+impl ForeignerInfo {
+    pub fn new(organism: &Organism) -> ForeignerInfo {
         Self {
             organism_id: organism.id(),
             position: organism.position(),

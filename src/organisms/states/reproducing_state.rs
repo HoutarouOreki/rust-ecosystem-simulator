@@ -8,7 +8,7 @@ use crate::organisms::{
 };
 
 use super::{
-    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult},
+    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -32,7 +32,7 @@ impl OrganismState for ReproducingState {
         &mut self,
         shared_state: &mut super::shared_state::SharedState,
         delta: std::time::Duration,
-        _awareness_of_others: &[AwarenessOfOtherOrganism],
+        _foreigners_info: &[ForeignerInfo],
     ) -> super::organism_state::StateRunResult {
         if self.time_left < delta {
             shared_state.on_had_children();

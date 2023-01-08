@@ -20,7 +20,7 @@ use super::{
     states::{
         dead_state::DeadState,
         idle_state::IdleState,
-        organism_state::{AwarenessOfOtherOrganism, OrganismState},
+        organism_state::{ForeignerInfo, OrganismState},
         shared_state::SharedState,
     },
 };
@@ -183,7 +183,7 @@ impl Organism {
     pub fn simulate(
         &mut self,
         delta: Duration,
-        awareness_of_others: &[AwarenessOfOtherOrganism],
+        foreigners_info: &[ForeignerInfo],
         application_context: &ApplicationContext,
     ) -> OrganismResult {
         if self.is_dead() {
@@ -201,7 +201,7 @@ impl Organism {
 
         let state_run_result = self
             .state
-            .run(&mut self.shared_state, delta, awareness_of_others);
+            .run(&mut self.shared_state, delta, foreigners_info);
         if let StateTransition::Next(next_state) = state_run_result.state_transition {
             self.state = next_state;
         }
