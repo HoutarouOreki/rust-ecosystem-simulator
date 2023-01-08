@@ -6,7 +6,8 @@ use std::{
 use ggez::{
     context::Has,
     graphics::{
-        Canvas, Color, DrawMode, DrawParam, FillOptions, GraphicsContext, Mesh, Rect, Text,
+        Canvas, Color, DrawMode, DrawParam, FillOptions, GraphicsContext, InstanceArray, Mesh,
+        Rect, Text,
     },
     input::keyboard::KeyboardContext,
     mint::Point2,
@@ -26,7 +27,7 @@ use crate::{
     vector_helper,
 };
 
-const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 10f32;
+const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 60f32;
 const WORLD_SIZE: f32 =
     (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
@@ -44,23 +45,49 @@ pub struct Environment {
     key_dictionary: HashMap<VirtualKeyCode, [f32; 2], RandomState>,
     to_add: Vec<Organism>,
     to_remove: HashSet<u64>,
+    organisms_mesh: InstanceArray,
+    vertical_horizontal_lines: Option<(Mesh, Mesh)>,
+    awareness_of_others: Vec<AwarenessOfOtherOrganism>,
+    organism_counter: HashMap<String, u32>,
 }
 
 impl Environment {
-    pub fn simulate(&mut self, delta: Duration) {
-        let awareness_of_others = create_awareness_of_others(&self.organisms);
-
+    pub fn simulate(&mut self, delta: Duration, application_context: &ApplicationContext) {
+        recreate_awareness_of_others(&self.organisms, &mut self.awareness_of_others);
         for organism in self.organisms.iter_mut() {
-            match Self::simulate_organism(organism, delta, &awareness_of_others) {
-                OrganismsChange::Add(mut vec) => self.to_add.append(&mut vec),
+            match Self::simulate_organism(
+                organism,
+                delta,
+                &self.awareness_of_others,
+                application_context,
+            ) {
+                OrganismsChange::Add(mut vec) => {
+                    vec.iter().for_each(|x| {
+                        self::adjust_species_counter(x, &mut self.organism_counter, true, 1)
+                    });
+                    self.to_add.append(&mut vec);
+                }
                 OrganismsChange::Remove(id) => {
+                    self.to_remove.insert(id);
+                }
+                OrganismsChange::AddRemove(mut vec, id) => {
+                    vec.iter().for_each(|x| {
+                        self::adjust_species_counter(x, &mut self.organism_counter, true, 1)
+                    });
+                    self.to_add.append(&mut vec);
                     self.to_remove.insert(id);
                 }
                 OrganismsChange::None => {}
             };
         }
-        self.organisms
-            .retain(|x| x.is_alive() && !self.to_remove.contains(&x.id()));
+        self.organisms.retain(|x| {
+            if !self.to_remove.contains(&x.id()) {
+                true
+            } else {
+                self::adjust_species_counter(x, &mut self.organism_counter, false, 1);
+                false
+            }
+        });
         self.organisms.append(&mut self.to_add);
         self.step += 1;
         self.time += delta;
@@ -69,9 +96,10 @@ impl Environment {
     fn simulate_organism(
         organism: &mut Organism,
         delta: Duration,
-        awareness_of_others: &Vec<AwarenessOfOtherOrganism>,
+        awareness_of_others: &[AwarenessOfOtherOrganism],
+        application_context: &ApplicationContext,
     ) -> OrganismsChange {
-        let result = organism.simulate(delta, awareness_of_others);
+        let result = organism.simulate(delta, awareness_of_others, application_context);
         match result {
             OrganismResult::HadChildren { amount } => {
                 let vec = create_organism_children(amount, organism);
@@ -81,11 +109,21 @@ impl Environment {
                 OrganismsChange::Remove(other_organism_id)
             }
             OrganismResult::None => OrganismsChange::None,
+            OrganismResult::Died => {
+                OrganismsChange::AddRemove(vec![Organism::new_corpse(organism)], organism.id())
+            }
+            OrganismResult::Disappeared => OrganismsChange::Remove(organism.id()),
         }
     }
 
-    pub fn new(generation_configuration: &GenerationConfiguration) -> Environment {
+    pub fn new(ctx: &Context, generation_configuration: &GenerationConfiguration) -> Environment {
         let organisms = Self::generate_organisms(generation_configuration);
+
+        let mut organism_counter = HashMap::new();
+        for organism in organisms.iter() {
+            adjust_species_counter(organism, &mut organism_counter, true, 1);
+        }
+
         let mut layout_info = LayoutInfo::new_centered();
         layout_info.relative_size = Point2 { x: true, y: true };
         Environment {
@@ -104,11 +142,17 @@ impl Environment {
             ]),
             to_add: Vec::new(),
             to_remove: HashSet::new(),
+            organisms_mesh: InstanceArray::new(&ctx.gfx, Option::None),
+            vertical_horizontal_lines: Option::None,
+            awareness_of_others: Vec::new(),
+            organism_counter,
         }
     }
 
     fn generate_organisms(generation_configuration: &GenerationConfiguration) -> Vec<Organism> {
         let mut organisms = Vec::new();
+
+        let amount_multiplier = 0.4f32;
 
         let mut rng = rand::thread_rng();
         let coordinate_uniform = Uniform::new_inclusive(
@@ -117,7 +161,8 @@ impl Environment {
         );
 
         for species_configuration in &generation_configuration.species {
-            let organisms_amount = (species_configuration.amount_per_meter * WORLD_SIZE) as u32;
+            let organisms_amount =
+                (species_configuration.amount_per_meter * WORLD_SIZE * amount_multiplier) as u32;
 
             for _ in 0..organisms_amount {
                 let mut organism =
@@ -137,7 +182,7 @@ impl Environment {
         &mut self,
         canvas: &mut Canvas,
         gfx: &impl Has<GraphicsContext>,
-        application_context: &ApplicationContext,
+        _application_context: &ApplicationContext,
     ) {
         let display_screen_rect = canvas.screen_coordinates().unwrap();
 
@@ -165,45 +210,71 @@ impl Environment {
         let circle_mesh = self
             .circle_mesh
             .get_or_insert(Self::get_new_circle_mesh(gfx));
-        for organism in self.organisms.iter() {
-            organism.draw(
-                &environment_screen_rect,
-                self.zoom,
-                canvas,
-                gfx,
-                circle_mesh,
-                application_context,
-            );
-        }
+        // for organism in self.organisms.iter() {
+        //     organism.draw(
+        //         &environment_screen_rect,
+        //         self.zoom,
+        //         canvas,
+        //         gfx,
+        //         circle_mesh,
+        //         application_context,
+        //     );
+        // }
+        let visibility_rect = canvas.screen_coordinates().unwrap();
+
+        self.organisms_mesh
+            .set(self.organisms.iter().filter_map(|o| {
+                o.get_draw_param(&environment_screen_rect, self.zoom, &visibility_rect)
+            }));
+        // canvas.draw(&self.organisms_mesh, DrawParam::default());
+        canvas.draw_instanced_mesh(
+            circle_mesh.to_owned(),
+            &self.organisms_mesh,
+            DrawParam::default(),
+        );
 
         canvas.draw(&Text::new(self.step.to_string()), DrawParam::default());
         canvas.draw(
-            &Text::new(format!("{:.2}", self.time.as_secs_f32())),
+            &Text::new(format!(
+                "{:.2}\norganisms:{}\ndrawn:{}\n{}",
+                self.time.as_secs_f32(),
+                self.organisms.len(),
+                self.organisms_mesh.instances().len(),
+                Self::species_count_string(&self.organism_counter)
+            )),
             DrawParam::default().dest([0.0, 20.0]),
         )
     }
 
+    fn species_count_string(organism_counter: &HashMap<String, u32>) -> String {
+        let mut s = String::with_capacity(100);
+        for (species_name, species_count) in organism_counter {
+            s += &format!("{}: {}\n", species_name, species_count);
+        }
+        s
+    }
+
     fn get_new_circle_mesh(gfx: &impl Has<GraphicsContext>) -> Mesh {
-        // Mesh::new_circle(
-        //     gfx,
-        //     DrawMode::Fill(FillOptions::DEFAULT),
-        //     Point2 { x: 0.0, y: 0.0 },
-        //     0.2,
-        //     0.1,
-        //     Color::WHITE,
-        // )
-        let size = 0.4;
-        Mesh::new_rectangle(
+        let size = 0.9;
+        Mesh::new_circle(
             gfx,
             DrawMode::Fill(FillOptions::DEFAULT),
-            Rect {
-                x: -size * 0.5,
-                y: -size * 0.5,
-                w: size,
-                h: size,
-            },
+            Point2 { x: 0.0, y: 0.0 },
+            size * 0.5,
+            0.07,
             Color::WHITE,
         )
+        // Mesh::new_rectangle(
+        //     gfx,
+        //     DrawMode::Fill(FillOptions::DEFAULT),
+        //     Rect {
+        //         x: -size * 0.5,
+        //         y: -size * 0.5,
+        //         w: size,
+        //         h: size,
+        //     },
+        //     Color::WHITE,
+        // )
         .unwrap()
     }
 
@@ -217,25 +288,30 @@ impl Environment {
     }
 
     fn draw_lines(
-        &self,
+        &mut self,
         canvas: &mut Canvas,
         parent_screen_rect: &Rect,
         environment_screen_rect: &Rect,
         gfx: &impl Has<GraphicsContext>,
     ) {
-        let color = Color::from_rgb(50, 50, 50);
+        let color = Color::from_rgb(30, 30, 30);
 
         let horizontal_start = self.calculate_first_line(environment_screen_rect.x);
         let vertical_start = self.calculate_first_line(environment_screen_rect.y);
 
         let (vertical_line, horizontal_line) =
-            create_vertical_horizontal_lines(gfx, *environment_screen_rect, color);
+            self.vertical_horizontal_lines
+                .get_or_insert(create_vertical_horizontal_lines(
+                    gfx,
+                    *environment_screen_rect,
+                    color,
+                ));
 
         // vertical lines
         let mut line_x = horizontal_start;
         while line_x <= parent_screen_rect.right() {
             let draw_param = DrawParam::default().dest(Point2 { x: line_x, y: 0.0 });
-            canvas.draw(&vertical_line, draw_param);
+            canvas.draw(vertical_line, draw_param);
             line_x += self.zoom;
         }
 
@@ -243,7 +319,7 @@ impl Environment {
         let mut line_y = vertical_start;
         while line_y <= parent_screen_rect.bottom() {
             let draw_param = DrawParam::default().dest(Point2 { x: 0.0, y: line_y });
-            canvas.draw(&horizontal_line, draw_param);
+            canvas.draw(horizontal_line, draw_param);
             line_y += self.zoom;
         }
     }
@@ -284,6 +360,25 @@ impl Environment {
             }
         }
         direction
+    }
+}
+
+fn adjust_species_counter(
+    organism: &Organism,
+    organism_counter: &mut HashMap<String, u32>,
+    increase: bool,
+    amount: u32,
+) {
+    let species_name = organism.shared_state().clone().species.name;
+    let species_count = organism_counter.get_mut(&organism.shared_state().clone().species.name);
+    if let Some(count) = species_count {
+        if increase {
+            *count += amount;
+        } else {
+            *count -= amount;
+        }
+    } else {
+        organism_counter.insert(species_name, 1);
     }
 }
 
@@ -342,19 +437,19 @@ fn create_line(
     Mesh::new_line(gfx, &[point_a, point_b], 1.0, color).unwrap()
 }
 
-fn create_awareness_of_others(organisms: &Vec<Organism>) -> Vec<AwarenessOfOtherOrganism> {
-    let mut vec = Vec::new();
-    vec.reserve_exact(organisms.len());
-
+fn recreate_awareness_of_others(
+    organisms: &Vec<Organism>,
+    awareness_of_others: &mut Vec<AwarenessOfOtherOrganism>,
+) {
+    awareness_of_others.clear();
     for organism in organisms {
-        vec.push(AwarenessOfOtherOrganism::new(organism));
+        awareness_of_others.push(AwarenessOfOtherOrganism::new(organism));
     }
-
-    vec
 }
 
 enum OrganismsChange {
     Add(Vec<Organism>),
     Remove(u64),
+    AddRemove(Vec<Organism>, u64),
     None,
 }

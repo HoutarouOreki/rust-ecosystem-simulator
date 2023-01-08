@@ -3,13 +3,13 @@ use std::time::Duration;
 use rand::Rng;
 
 // these are u32 'cause Rng::gen_ratio supports u32
-const HUNT_CHANCE: u32 = 6;
-const WALK_CHANCE: u32 = 2;
-const REPRODUCE_CHANCE: u32 = 7;
+const HUNT_CHANCE: u32 = 16;
+const WALK_CHANCE: u32 = 10;
+const REPRODUCE_CHANCE: u32 = 54;
 
 use super::{
     hunting_state::HuntingState,
-    organism_state::{OrganismState, StateRunResult},
+    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult},
     reproducing_state::ReproducingState,
     shared_state::SharedState,
     walking_state::WalkingState,
@@ -21,7 +21,7 @@ pub struct IdleState {
     target_duration: Duration,
 }
 
-const IDLE_TIME_S: [f32; 2] = [3.0, 7.0];
+const IDLE_TIME_S: [f32; 2] = [1.0, 3.0];
 
 impl IdleState {
     pub fn new() -> Self {
@@ -90,7 +90,12 @@ impl OrganismState for IdleState {
         Self::new()
     }
 
-    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateRunResult {
+    fn run(
+        &mut self,
+        shared_state: &mut SharedState,
+        delta: Duration,
+        _awareness_of_others: &[AwarenessOfOtherOrganism],
+    ) -> StateRunResult {
         self.duration += delta;
         if self.duration >= self.target_duration {
             StateRunResult::none_next(Self::pick_new_state(shared_state)(shared_state))

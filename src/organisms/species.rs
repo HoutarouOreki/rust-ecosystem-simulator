@@ -14,6 +14,8 @@ pub struct Species {
     pub color: Color,
     pub eats: Nutrition,
     pub contained_nutrition: Nutrition,
+    pub eyesight_distance: f32,
+    pub birth_distance: f32,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -21,4 +23,5 @@ pub enum Nutrition {
     None,
     Plant,
     Meat,
+    Corpse,
 }

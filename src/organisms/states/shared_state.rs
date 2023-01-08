@@ -83,4 +83,8 @@ impl SharedState {
     pub fn age(&self) -> Duration {
         self.age
     }
+
+    pub fn on_had_children(&mut self) {
+        self.energy -= self.species.cost_of_birth;
+    }
 }

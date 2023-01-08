@@ -7,14 +7,16 @@ use crate::organisms::{organism::Organism, organism_result::OrganismResult, spec
 use super::shared_state::SharedState;
 
 pub trait OrganismState {
-    #![allow(clippy::ptr_arg)]
-    fn make_aware_of_others(&mut self, _awareness_of_others: &Vec<AwarenessOfOtherOrganism>) {}
-
     fn initialize(shared_state: &mut SharedState) -> Self
     where
         Self: Sized;
 
-    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateRunResult;
+    fn run(
+        &mut self,
+        shared_state: &mut SharedState,
+        delta: Duration,
+        awareness_of_others: &[AwarenessOfOtherOrganism],
+    ) -> StateRunResult;
 
     fn init_boxed(shared_state: &mut SharedState) -> Box<Self>
     where

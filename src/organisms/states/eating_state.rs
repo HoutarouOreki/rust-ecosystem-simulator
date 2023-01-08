@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::{
     idle_state::IdleState,
-    organism_state::{OrganismState, StateRunResult},
+    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -10,8 +10,8 @@ pub struct EatingState {
     time_remaining: Duration,
 }
 
-const EATING_DURATION_S: f32 = 2.5;
-const ENERGY_FROM_EATING: f32 = 20.0;
+const EATING_DURATION_S: f32 = 1.0;
+const ENERGY_FROM_EATING: f32 = 26.0;
 
 impl OrganismState for EatingState {
     fn initialize(_shared_state: &mut SharedState) -> Self
@@ -23,7 +23,12 @@ impl OrganismState for EatingState {
         }
     }
 
-    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateRunResult {
+    fn run(
+        &mut self,
+        shared_state: &mut SharedState,
+        delta: Duration,
+        _awareness_of_others: &[AwarenessOfOtherOrganism],
+    ) -> StateRunResult {
         if delta > self.time_remaining {
             shared_state.increase_energy(ENERGY_FROM_EATING);
             return StateRunResult::none_next(IdleState::init_boxed(shared_state));

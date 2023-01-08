@@ -7,11 +7,11 @@ use crate::vector_helper;
 
 use super::{
     idle_state::IdleState,
-    organism_state::{OrganismState, StateRunResult},
+    organism_state::{AwarenessOfOtherOrganism, OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
-const NEW_TARGET_DISTANCE: [f32; 2] = [1.0, 5.0];
+const NEW_TARGET_DISTANCE: [f32; 2] = [1.0, 15.0];
 
 #[derive(Clone, Copy)]
 pub struct WalkingState {
@@ -51,7 +51,12 @@ impl OrganismState for WalkingState {
         }
     }
 
-    fn run(&mut self, shared_state: &mut SharedState, delta: Duration) -> StateRunResult {
+    fn run(
+        &mut self,
+        shared_state: &mut SharedState,
+        delta: Duration,
+        _awareness_of_others: &[AwarenessOfOtherOrganism],
+    ) -> StateRunResult {
         let new_pos = Self::calculate_position(
             delta,
             shared_state.position,
