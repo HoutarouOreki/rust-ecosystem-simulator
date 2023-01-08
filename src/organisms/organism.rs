@@ -10,17 +10,15 @@ use ggez::{
 };
 
 use crate::{
-    application_context::ApplicationContext, layout_info::LayoutInfo,
-    organisms::states::organism_state::StateTransition,
+    application_context::ApplicationContext, environment_awareness::EnvironmentAwareness,
+    layout_info::LayoutInfo, organisms::states::organism_state::StateTransition,
 };
 
 use super::{
     organism_result::OrganismResult,
     species::{Nutrition, Species},
     states::{
-        dead_state::DeadState,
-        idle_state::IdleState,
-        organism_state::{ForeignerInfo, OrganismState},
+        dead_state::DeadState, idle_state::IdleState, organism_state::OrganismState,
         shared_state::SharedState,
     },
 };
@@ -183,7 +181,7 @@ impl Organism {
     pub fn simulate(
         &mut self,
         delta: Duration,
-        foreigners_info: &[ForeignerInfo],
+        environment_awareness: &EnvironmentAwareness,
         application_context: &ApplicationContext,
     ) -> OrganismResult {
         if self.is_dead() {
@@ -201,7 +199,7 @@ impl Organism {
 
         let state_run_result = self
             .state
-            .run(&mut self.shared_state, delta, foreigners_info);
+            .run(&mut self.shared_state, delta, environment_awareness);
         if let StateTransition::Next(next_state) = state_run_result.state_transition {
             self.state = next_state;
         }

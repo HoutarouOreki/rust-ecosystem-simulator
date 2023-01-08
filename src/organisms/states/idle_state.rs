@@ -7,9 +7,11 @@ const HUNT_CHANCE: u32 = 16;
 const WALK_CHANCE: u32 = 10;
 const REPRODUCE_CHANCE: u32 = 54;
 
+use crate::environment_awareness::EnvironmentAwareness;
+
 use super::{
     hunting_state::HuntingState,
-    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
+    organism_state::{OrganismState, StateRunResult},
     reproducing_state::ReproducingState,
     shared_state::SharedState,
     walking_state::WalkingState,
@@ -94,7 +96,7 @@ impl OrganismState for IdleState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        _foreigners_info: &[ForeignerInfo],
+        _environment_awareness: &EnvironmentAwareness,
     ) -> StateRunResult {
         self.duration += delta;
         if self.duration >= self.target_duration {

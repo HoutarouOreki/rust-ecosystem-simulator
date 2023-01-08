@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use ggez::mint::Point2;
 
-use crate::{organisms::organism_result::OrganismResult, vector_helper};
+use crate::{
+    environment_awareness::EnvironmentAwareness, organisms::organism_result::OrganismResult,
+    vector_helper,
+};
 
 use super::{
     eating_state::EatingState,
@@ -22,12 +25,12 @@ impl HuntingState {
     fn pick_new_target(
         &self,
         shared_state: &SharedState,
-        foreigners_info: &[ForeignerInfo],
+        environment_awareness: &EnvironmentAwareness,
     ) -> Option<(u64, Point2<f32>)> {
-        let mut index_of_closest: Option<usize> = Option::None;
-        let mut closest_position: Option<Point2<f32>> = Option::None;
+        let mut closest: Option<ForeignerInfo> = Option::None;
 
-        for (i, foreigner_info) in foreigners_info.iter().enumerate() {
+        let foreigners_in_radius = get_foreigners_in_eyesight(environment_awareness, shared_state);
+        for foreigner_info in foreigners_in_radius {
             if foreigner_info.species_name == shared_state.species.name
                 || foreigner_info.contains_nutrition != shared_state.species.eats
             {
@@ -37,21 +40,18 @@ impl HuntingState {
             if !Self::is_close_enough(shared_state, foreigner_info) {
                 continue;
             }
-            if index_of_closest.is_none() {
-                index_of_closest = Some(i);
-                closest_position = Some(foreigner_info.position)
-            } else if Self::is_closer_than(
-                shared_state.position,
-                foreigner_info.position,
-                closest_position.unwrap(),
-            ) {
-                index_of_closest = Some(i);
-                closest_position = Some(foreigner_info.position);
+            if closest.is_none()
+                || Self::is_closer_than(
+                    shared_state.position,
+                    foreigner_info.position,
+                    closest.to_owned().unwrap().position,
+                )
+            {
+                closest = Some(foreigner_info.clone());
             }
         }
 
-        if let Some(i) = index_of_closest {
-            let closest: &ForeignerInfo = foreigners_info.get(i).unwrap();
+        if let Some(closest) = closest {
             Option::Some((closest.organism_id, closest.position))
         } else {
             Option::None
@@ -71,8 +71,12 @@ impl HuntingState {
             < vector_helper::distance(my_position, than_current)
     }
 
-    fn check_if_still_exists(id: u64, foreigners_info: &[ForeignerInfo]) -> bool {
-        foreigners_info.iter().any(|x| x.organism_id == id)
+    fn check_if_still_exists(
+        id: u64,
+        environment_awareness: &EnvironmentAwareness,
+        shared_state: &SharedState,
+    ) -> bool {
+        get_foreigners_in_eyesight(environment_awareness, shared_state).any(|x| x.organism_id == id)
     }
 
     fn hunt_organism(
@@ -80,13 +84,13 @@ impl HuntingState {
         shared_state: &mut SharedState,
         hunted_position: Point2<f32>,
         hunted_id: u64,
-        foreigners_info: &[ForeignerInfo],
+        environment_awareness: &EnvironmentAwareness,
         delta: Duration,
     ) -> StateRunResult {
         if vector_helper::distance(shared_state.position, hunted_position) < DISTANCE_TO_EAT {
-            if !Self::check_if_still_exists(hunted_id, foreigners_info) {
+            if !Self::check_if_still_exists(hunted_id, environment_awareness, shared_state) {
                 self.hunted_organism_id_position =
-                    self.pick_new_target(shared_state, foreigners_info);
+                    self.pick_new_target(shared_state, environment_awareness);
                 return StateRunResult::none_same();
             }
             StateRunResult {
@@ -100,6 +104,16 @@ impl HuntingState {
             StateRunResult::none_same()
         }
     }
+}
+
+fn get_foreigners_in_eyesight<'a>(
+    environment_awareness: &'a EnvironmentAwareness,
+    shared_state: &SharedState,
+) -> impl Iterator<Item = &'a ForeignerInfo> {
+    environment_awareness.get_radius_around(
+        shared_state.position,
+        shared_state.species.eyesight_distance,
+    )
 }
 
 impl OrganismState for HuntingState {
@@ -116,10 +130,10 @@ impl OrganismState for HuntingState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        foreigners_info: &[ForeignerInfo],
+        environment_awareness: &EnvironmentAwareness,
     ) -> StateRunResult {
         if self.hunted_organism_id_position.is_none() {
-            let new_target = self.pick_new_target(shared_state, foreigners_info);
+            let new_target = self.pick_new_target(shared_state, environment_awareness);
             if new_target.is_none() {
                 return StateRunResult::none_next(WalkingState::init_boxed(shared_state));
             }
@@ -131,7 +145,7 @@ impl OrganismState for HuntingState {
                 shared_state,
                 hunted_position,
                 hunted_id,
-                foreigners_info,
+                environment_awareness,
                 delta,
             )
         } else {

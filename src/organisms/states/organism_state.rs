@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use ggez::mint::Point2;
 
-use crate::organisms::{organism::Organism, organism_result::OrganismResult, species::Nutrition};
+use crate::{
+    environment_awareness::EnvironmentAwareness,
+    organisms::{organism::Organism, organism_result::OrganismResult, species::Nutrition},
+};
 
 use super::shared_state::SharedState;
 
@@ -15,7 +18,7 @@ pub trait OrganismState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        foreigners_info: &[ForeignerInfo],
+        environment_awareness: &EnvironmentAwareness,
     ) -> StateRunResult;
 
     fn init_boxed(shared_state: &mut SharedState) -> Box<Self>

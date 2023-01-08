@@ -1,8 +1,10 @@
 use std::time::Duration;
 
+use crate::environment_awareness::EnvironmentAwareness;
+
 use super::{
     idle_state::IdleState,
-    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
+    organism_state::{OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -27,7 +29,7 @@ impl OrganismState for EatingState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        _foreigners_info: &[ForeignerInfo],
+        _environment_awareness: &EnvironmentAwareness,
     ) -> StateRunResult {
         if delta > self.time_remaining {
             shared_state.increase_energy(ENERGY_FROM_EATING);

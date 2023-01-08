@@ -3,6 +3,7 @@
 pub mod application_context;
 mod configurations;
 mod environment;
+mod environment_awareness;
 mod layout_info;
 mod organisms;
 pub mod vector_helper;

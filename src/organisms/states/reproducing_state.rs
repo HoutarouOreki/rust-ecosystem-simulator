@@ -2,13 +2,16 @@ use std::time::Duration;
 
 use rand::Rng;
 
-use crate::organisms::{
-    organism_result::OrganismResult,
-    states::{idle_state::IdleState, organism_state::StateTransition},
+use crate::{
+    environment_awareness::EnvironmentAwareness,
+    organisms::{
+        organism_result::OrganismResult,
+        states::{idle_state::IdleState, organism_state::StateTransition},
+    },
 };
 
 use super::{
-    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
+    organism_state::{OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -32,7 +35,7 @@ impl OrganismState for ReproducingState {
         &mut self,
         shared_state: &mut super::shared_state::SharedState,
         delta: std::time::Duration,
-        _foreigners_info: &[ForeignerInfo],
+        _environment_awareness: &EnvironmentAwareness,
     ) -> super::organism_state::StateRunResult {
         if self.time_left < delta {
             shared_state.on_had_children();

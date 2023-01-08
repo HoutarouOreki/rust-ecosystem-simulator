@@ -3,11 +3,11 @@ use std::time::Duration;
 use ggez::mint::Point2;
 use rand::Rng;
 
-use crate::vector_helper;
+use crate::{environment_awareness::EnvironmentAwareness, vector_helper};
 
 use super::{
     idle_state::IdleState,
-    organism_state::{ForeignerInfo, OrganismState, StateRunResult},
+    organism_state::{OrganismState, StateRunResult},
     shared_state::SharedState,
 };
 
@@ -55,7 +55,7 @@ impl OrganismState for WalkingState {
         &mut self,
         shared_state: &mut SharedState,
         delta: Duration,
-        _foreigners_info: &[ForeignerInfo],
+        _environment_awareness: &EnvironmentAwareness,
     ) -> StateRunResult {
         let new_pos = Self::calculate_position(
             delta,

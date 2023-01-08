@@ -19,14 +19,13 @@ use rand::{distributions::Uniform, prelude::Distribution};
 use crate::{
     application_context::ApplicationContext,
     configurations::generation_configuration::GenerationConfiguration,
+    environment_awareness::EnvironmentAwareness,
     layout_info::LayoutInfo,
-    organisms::{
-        organism::Organism, organism_result::OrganismResult, states::organism_state::ForeignerInfo,
-    },
+    organisms::{organism::Organism, organism_result::OrganismResult},
     vector_helper,
 };
 
-const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 60f32;
+const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 500f32;
 const WORLD_SIZE: f32 =
     (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
@@ -46,18 +45,18 @@ pub struct Environment {
     to_remove: HashSet<u64>,
     organisms_mesh: InstanceArray,
     vertical_horizontal_lines: Option<(Mesh, Mesh)>,
-    foreigners_info: Vec<ForeignerInfo>,
+    environment_awareness: EnvironmentAwareness,
     organism_counter: HashMap<String, u32>,
 }
 
 impl Environment {
     pub fn simulate(&mut self, delta: Duration, application_context: &ApplicationContext) {
-        recreate_foreigners_info(&self.organisms, &mut self.foreigners_info);
+        self.environment_awareness.refill(&self.organisms);
         for organism in self.organisms.iter_mut() {
             match Self::simulate_organism(
                 organism,
                 delta,
-                &self.foreigners_info,
+                &self.environment_awareness,
                 application_context,
             ) {
                 OrganismsChange::Add(mut vec) => {
@@ -95,10 +94,10 @@ impl Environment {
     fn simulate_organism(
         organism: &mut Organism,
         delta: Duration,
-        foreigners_info: &[ForeignerInfo],
+        environment_awareness: &EnvironmentAwareness,
         application_context: &ApplicationContext,
     ) -> OrganismsChange {
-        let result = organism.simulate(delta, foreigners_info, application_context);
+        let result = organism.simulate(delta, environment_awareness, application_context);
         match result {
             OrganismResult::HadChildren { amount } => {
                 let vec = create_organism_children(amount, organism);
@@ -143,7 +142,7 @@ impl Environment {
             to_remove: HashSet::new(),
             organisms_mesh: InstanceArray::new(&ctx.gfx, Option::None),
             vertical_horizontal_lines: Option::None,
-            foreigners_info: Vec::new(),
+            environment_awareness: EnvironmentAwareness::new(32.0),
             organism_counter,
         }
     }
@@ -254,7 +253,7 @@ impl Environment {
     }
 
     fn get_new_circle_mesh(gfx: &impl Has<GraphicsContext>) -> Mesh {
-        let size = 0.9;
+        let size = 2.0;
         Mesh::new_circle(
             gfx,
             DrawMode::Fill(FillOptions::DEFAULT),
@@ -434,13 +433,6 @@ fn create_line(
     color: Color,
 ) -> Mesh {
     Mesh::new_line(gfx, &[point_a, point_b], 1.0, color).unwrap()
-}
-
-fn recreate_foreigners_info(organisms: &Vec<Organism>, foreigners_info: &mut Vec<ForeignerInfo>) {
-    foreigners_info.clear();
-    for organism in organisms {
-        foreigners_info.push(ForeignerInfo::new(organism));
-    }
 }
 
 enum OrganismsChange {
