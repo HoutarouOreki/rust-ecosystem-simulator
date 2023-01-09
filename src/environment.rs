@@ -25,7 +25,7 @@ use crate::{
     vector_helper,
 };
 
-const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 500f32;
+const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 50f32;
 const WORLD_SIZE: f32 =
     (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
@@ -47,15 +47,26 @@ pub struct Environment {
     vertical_horizontal_lines: Option<(Mesh, Mesh)>,
     environment_awareness: EnvironmentAwareness,
     organism_counter: HashMap<String, u32>,
+    lines_horizontal_mesh: InstanceArray,
+    lines_vertical_mesh: InstanceArray,
+    simulate_every_n_organism: usize,
 }
 
 impl Environment {
     pub fn simulate(&mut self, delta: Duration, application_context: &ApplicationContext) {
+        if delta == Duration::ZERO {
+            return;
+        }
         self.environment_awareness.refill(&self.organisms);
-        for organism in self.organisms.iter_mut() {
+        for (i, organism) in self.organisms.iter_mut().enumerate() {
+            if self.simulate_every_n_organism > 1
+                && (i + self.step as usize) % self.simulate_every_n_organism != 0
+            {
+                continue;
+            }
             match Self::simulate_organism(
                 organism,
-                delta,
+                delta * self.simulate_every_n_organism as u32,
                 &self.environment_awareness,
                 application_context,
             ) {
@@ -144,6 +155,9 @@ impl Environment {
             vertical_horizontal_lines: Option::None,
             environment_awareness: EnvironmentAwareness::new(32.0),
             organism_counter,
+            lines_horizontal_mesh: InstanceArray::new(&ctx.gfx, Option::None),
+            lines_vertical_mesh: InstanceArray::new(&ctx.gfx, Option::None),
+            simulate_every_n_organism: 1,
         }
     }
 
@@ -234,11 +248,12 @@ impl Environment {
         canvas.draw(&Text::new(self.step.to_string()), DrawParam::default());
         canvas.draw(
             &Text::new(format!(
-                "{:.2}\norganisms:{}\ndrawn:{}\n{}",
+                "{:.2}\norganisms:{}\ndrawn:{}\n\n{}\nnth organism: {}",
                 self.time.as_secs_f32(),
                 self.organisms.len(),
                 self.organisms_mesh.instances().len(),
-                Self::species_count_string(&self.organism_counter)
+                Self::species_count_string(&self.organism_counter),
+                self.simulate_every_n_organism,
             )),
             DrawParam::default().dest([0.0, 20.0]),
         )
@@ -276,13 +291,13 @@ impl Environment {
         .unwrap()
     }
 
-    fn calculate_first_line(&self, env_boundary: f32) -> f32 {
+    fn calculate_first_line(zoom: f32, env_boundary: f32) -> f32 {
         if env_boundary > 0.0 {
             return env_boundary;
         }
 
-        let skips = (env_boundary / self.zoom).abs().floor();
-        env_boundary + self.zoom * skips
+        let skips = (env_boundary / zoom).abs().floor();
+        env_boundary + zoom * skips
     }
 
     fn draw_lines(
@@ -294,8 +309,8 @@ impl Environment {
     ) {
         let color = Color::from_rgb(30, 30, 30);
 
-        let horizontal_start = self.calculate_first_line(environment_screen_rect.x);
-        let vertical_start = self.calculate_first_line(environment_screen_rect.y);
+        let x_start = Self::calculate_first_line(self.zoom, environment_screen_rect.x);
+        let y_start = Self::calculate_first_line(self.zoom, environment_screen_rect.y);
 
         let (vertical_line, horizontal_line) =
             self.vertical_horizontal_lines
@@ -305,20 +320,54 @@ impl Environment {
                     color,
                 ));
 
-        // vertical lines
-        let mut line_x = horizontal_start;
-        while line_x <= parent_screen_rect.right() {
-            let draw_param = DrawParam::default().dest(Point2 { x: line_x, y: 0.0 });
-            canvas.draw(vertical_line, draw_param);
-            line_x += self.zoom;
-        }
+        self.lines_horizontal_mesh.clear();
 
-        // horizontal lines
-        let mut line_y = vertical_start;
-        while line_y <= parent_screen_rect.bottom() {
-            let draw_param = DrawParam::default().dest(Point2 { x: 0.0, y: line_y });
-            canvas.draw(horizontal_line, draw_param);
-            line_y += self.zoom;
+        Self::recreate_lines_instance_mesh(
+            &mut self.lines_horizontal_mesh,
+            true,
+            self.zoom,
+            y_start,
+            parent_screen_rect.bottom(),
+        );
+
+        canvas.draw_instanced_mesh(
+            vertical_line.to_owned(),
+            &self.lines_vertical_mesh,
+            DrawParam::default(),
+        );
+
+        self.lines_vertical_mesh.clear();
+
+        Self::recreate_lines_instance_mesh(
+            &mut self.lines_vertical_mesh,
+            false,
+            self.zoom,
+            x_start,
+            parent_screen_rect.right(),
+        );
+
+        canvas.draw_instanced_mesh(
+            horizontal_line.to_owned(),
+            &self.lines_horizontal_mesh,
+            DrawParam::default(),
+        );
+    }
+
+    fn recreate_lines_instance_mesh(
+        lines_mesh: &mut InstanceArray,
+        horizontal: bool,
+        zoom: f32,
+        start: f32,
+        end: f32,
+    ) {
+        let mut pos = start;
+        while pos <= end {
+            let mut draw_param = DrawParam::default().dest(Point2 { x: pos, y: 0.0 });
+            if horizontal {
+                draw_param = draw_param.dest(Point2 { x: 0.0, y: pos })
+            }
+            lines_mesh.push(draw_param);
+            pos += zoom;
         }
     }
 
@@ -358,6 +407,29 @@ impl Environment {
             }
         }
         direction
+    }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        input: ggez::input::keyboard::KeyInput,
+        _repeated: bool,
+    ) {
+        if let Some(keycode) = input.keycode {
+            match keycode {
+                VirtualKeyCode::PageDown => {
+                    if self.simulate_every_n_organism > 1 {
+                        self.simulate_every_n_organism -= 1;
+                    }
+                }
+                VirtualKeyCode::PageUp => {
+                    if self.simulate_every_n_organism < 32 {
+                        self.simulate_every_n_organism += 1;
+                    }
+                }
+                _ => {}
+            }
+        }
     }
 }
 

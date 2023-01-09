@@ -41,7 +41,7 @@ fn main() {
 }
 
 struct MyGame {
-    time_since_last_simulation_step: Duration,
+    time_to_simulate: Duration,
     time_per_step: Duration,
     environment: Environment,
     application_context: ApplicationContext,
@@ -52,7 +52,7 @@ impl MyGame {
     pub fn new(ctx: &mut Context) -> MyGame {
         let generation_configuration = generate_default_generation_configuration();
         MyGame {
-            time_since_last_simulation_step: Duration::ZERO,
+            time_to_simulate: Duration::ZERO,
             environment: Environment::new(ctx, &generation_configuration),
             time_per_step: Duration::from_secs_f32(0.05),
             application_context: ApplicationContext::default(),
@@ -137,41 +137,46 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
 }
 
 impl EventHandler for MyGame {
-    fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.time_since_last_simulation_step += ctx.time.delta();
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        input: ggez::input::keyboard::KeyInput,
+        _repeated: bool,
+    ) -> GameResult {
+        let time_per_step_step = Duration::from_secs_f32(0.005);
+        match input.keycode {
+            Some(VirtualKeyCode::H) => {
+                self.application_context.draw_each_organism_info =
+                    !self.application_context.draw_each_organism_info
+            }
+            Some(VirtualKeyCode::Semicolon) => {
+                if let Some(new_value) = self.speed.checked_sub(1) {
+                    self.speed = new_value;
+                }
+            }
+            Some(VirtualKeyCode::Apostrophe) => self.speed += 1,
+            Some(VirtualKeyCode::Period) => self.time_per_step += time_per_step_step,
+            Some(VirtualKeyCode::Comma) => {
+                if let Some(new_value) = self.time_per_step.checked_sub(time_per_step_step) {
+                    self.time_per_step = new_value.max(time_per_step_step);
+                }
+            }
+            _ => {}
+        };
+        Ok(())
+    }
 
-        if self.time_since_last_simulation_step > self.time_per_step {
-            self.time_since_last_simulation_step -= self.time_per_step;
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        self.time_to_simulate += ctx.time.delta() * self.speed;
+
+        if self.time_to_simulate > self.time_per_step {
+            self.time_to_simulate -= self.time_per_step;
             self.environment
-                .simulate(self.time_per_step * self.speed, &self.application_context);
+                .simulate(self.time_per_step, &self.application_context);
         }
 
         self.environment.handle_camera_controls(ctx);
-
-        if ctx.keyboard.is_key_just_pressed(VirtualKeyCode::H) {
-            self.application_context.draw_each_organism_info =
-                !self.application_context.draw_each_organism_info;
-        }
-
-        if ctx.keyboard.is_key_just_pressed(VirtualKeyCode::Semicolon) {
-            if let Some(new_value) = self.speed.checked_sub(1) {
-                self.speed = new_value;
-            };
-        }
-        if ctx.keyboard.is_key_just_pressed(VirtualKeyCode::Apostrophe) {
-            self.speed += 1;
-        }
         self.speed = self.speed.clamp(0, 32);
-
-        let time_per_step_step = Duration::from_secs_f32(0.01);
-        if ctx.keyboard.is_key_just_pressed(VirtualKeyCode::Comma) {
-            self.time_per_step += time_per_step_step;
-        }
-        if self.time_per_step > time_per_step_step
-            && ctx.keyboard.is_key_just_pressed(VirtualKeyCode::Period)
-        {
-            self.time_per_step -= time_per_step_step;
-        }
 
         Ok(())
     }
@@ -189,9 +194,10 @@ impl EventHandler for MyGame {
 
         canvas.draw(
             &Text::new(format!(
-                "speed: {:.0}x\nstep delta: {:.3}",
+                "speed: {:.0}x\nstep delta: {}ms\nbehind: {}ms",
                 self.speed,
-                self.time_per_step.as_secs_f32()
+                self.time_per_step.as_millis(),
+                self.time_to_simulate.as_millis(),
             )),
             DrawParam::default().dest([width - 200.0, 0.0]),
         );
