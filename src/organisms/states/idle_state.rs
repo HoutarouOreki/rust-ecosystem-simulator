@@ -3,8 +3,8 @@ use std::time::Duration;
 use rand::Rng;
 
 // these are u32 'cause Rng::gen_ratio supports u32
-const HUNT_CHANCE: u32 = 16;
-const WALK_CHANCE: u32 = 10;
+const HUNT_CHANCE: u32 = 24;
+const WALK_CHANCE: u32 = 4;
 const REPRODUCE_CHANCE: u32 = 54;
 
 use crate::environment_awareness::EnvironmentAwareness;
@@ -23,7 +23,7 @@ pub struct IdleState {
     target_duration: Duration,
 }
 
-const IDLE_TIME_S: [f32; 2] = [1.0, 3.0];
+const IDLE_TIME_S: [f32; 2] = [4.0, 12.0];
 
 impl IdleState {
     pub fn new() -> Self {

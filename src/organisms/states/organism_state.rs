@@ -74,12 +74,19 @@ pub struct ForeignerInfo {
 }
 impl ForeignerInfo {
     pub fn new(organism: &Organism) -> ForeignerInfo {
+        let nutrition =
+            if organism.shared_state().species.birth_immunity >= organism.shared_state().age() {
+                Nutrition::None
+            } else {
+                organism.shared_state().species.contained_nutrition
+            };
+
         Self {
             organism_id: organism.id(),
             position: organism.position(),
             species_name: organism.shared_state().species.name.clone(),
             looks_for: organism.shared_state().species.eats,
-            contains_nutrition: organism.shared_state().species.contained_nutrition,
+            contains_nutrition: nutrition,
         }
     }
 }

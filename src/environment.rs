@@ -25,7 +25,7 @@ use crate::{
     vector_helper,
 };
 
-const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 50f32;
+const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 200f32;
 const WORLD_SIZE: f32 =
     (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
@@ -164,7 +164,7 @@ impl Environment {
     fn generate_organisms(generation_configuration: &GenerationConfiguration) -> Vec<Organism> {
         let mut organisms = Vec::new();
 
-        let amount_multiplier = 0.4f32;
+        let amount_multiplier = 0.1f32;
 
         let mut rng = rand::thread_rng();
         let coordinate_uniform = Uniform::new_inclusive(
@@ -360,6 +360,8 @@ impl Environment {
         start: f32,
         end: f32,
     ) {
+        let min_distance = 64.0;
+
         let mut pos = start;
         while pos <= end {
             let mut draw_param = DrawParam::default().dest(Point2 { x: pos, y: 0.0 });
@@ -367,7 +369,12 @@ impl Environment {
                 draw_param = draw_param.dest(Point2 { x: 0.0, y: pos })
             }
             lines_mesh.push(draw_param);
-            pos += zoom;
+
+            let mut distance = 0.0;
+            while distance < min_distance {
+                distance += zoom;
+            }
+            pos += distance;
         }
     }
 
@@ -409,7 +416,7 @@ impl Environment {
         direction
     }
 
-    fn key_down_event(
+    pub fn key_down_event(
         &mut self,
         _ctx: &mut Context,
         input: ggez::input::keyboard::KeyInput,

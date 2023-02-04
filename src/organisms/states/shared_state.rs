@@ -57,7 +57,7 @@ impl SharedState {
     }
 
     pub fn can_reproduce(&self) -> bool {
-        self.energy >= self.species.cost_of_birth
+        self.energy >= self.species.energy_cost_of_birth
     }
 
     pub fn can_eat(&self) -> bool {
@@ -85,6 +85,7 @@ impl SharedState {
     }
 
     pub fn on_had_children(&mut self) {
-        self.energy -= self.species.cost_of_birth;
+        self.energy -= self.species.energy_cost_of_birth;
+        self.health -= self.species.health_cost_of_birth;
     }
 }

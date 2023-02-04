@@ -99,11 +99,12 @@ impl Organism {
     }
 
     pub fn is_alive(&self) -> bool {
-        self.shared_state.age() <= self.shared_state.species.max_age
+        !self.is_dead()
     }
 
     pub fn is_dead(&self) -> bool {
         self.shared_state.age() > self.shared_state.species.max_age
+            && self.shared_state.health > 0.0
     }
 
     pub fn new_child(organism: &Organism) -> Self {
@@ -153,10 +154,11 @@ impl Organism {
     pub fn new_corpse(organism: &Organism) -> Self {
         let mut s = Self::new(Species {
             name: String::from("Corpse"),
-            max_energy: 0.0,
-            max_health: 0.0,
+            max_energy: 50.0,
+            max_health: 100.0, // so that it doesn't "die"
             max_age: Duration::from_secs(120),
-            cost_of_birth: 1.0,
+            energy_cost_of_birth: 1.0,
+            health_cost_of_birth: 0.0,
             walk_speed_s: 0.0,
             photosynthesis_rate_s: 0.0,
             color: Color::from_rgb(100, 100, 100),
@@ -164,6 +166,8 @@ impl Organism {
             contained_nutrition: Nutrition::Corpse,
             eyesight_distance: 0.0,
             birth_distance: 1.0,
+            birth_immunity: Duration::ZERO,
+            eating_distance: 0.2,
         });
         s.shared_state.position = organism.position();
         s.state = DeadState::new_boxed();

@@ -41,7 +41,7 @@ impl OrganismState for ReproducingState {
             shared_state.on_had_children();
             return StateRunResult {
                 organism_result: OrganismResult::HadChildren {
-                    amount: rand::thread_rng().gen_range(1..=3),
+                    amount: rand::thread_rng().gen_range(1..=2),
                 },
                 state_transition: StateTransition::Next(Box::new(IdleState::initialize(
                     shared_state,

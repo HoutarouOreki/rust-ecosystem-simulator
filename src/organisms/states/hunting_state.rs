@@ -14,9 +14,6 @@ use super::{
     walking_state::WalkingState,
 };
 
-const DISTANCE_TO_EAT: f32 = 0.1;
-const SEEING_DISTANCE: f32 = 4.0;
-
 pub struct HuntingState {
     hunted_organism_id_position: Option<(u64, Point2<f32>)>,
 }
@@ -37,7 +34,7 @@ impl HuntingState {
                 continue;
             }
 
-            if !Self::is_close_enough(shared_state, foreigner_info) {
+            if !Self::is_close_enough_to_start_hunting(shared_state, foreigner_info) {
                 continue;
             }
             if closest.is_none()
@@ -58,8 +55,9 @@ impl HuntingState {
         }
     }
 
-    fn is_close_enough(shared_state: &SharedState, foreigner_info: &ForeignerInfo) -> bool {
-        vector_helper::distance(shared_state.position, foreigner_info.position) <= SEEING_DISTANCE
+    fn is_close_enough_to_start_hunting(shared_state: &SharedState, foreigner_info: &ForeignerInfo) -> bool {
+        vector_helper::distance(shared_state.position, foreigner_info.position)
+            <= shared_state.species.eyesight_distance
     }
 
     fn is_closer_than(
@@ -87,7 +85,9 @@ impl HuntingState {
         environment_awareness: &EnvironmentAwareness,
         delta: Duration,
     ) -> StateRunResult {
-        if vector_helper::distance(shared_state.position, hunted_position) < DISTANCE_TO_EAT {
+        if vector_helper::distance(shared_state.position, hunted_position)
+            < shared_state.species.eating_distance
+        {
             if !Self::check_if_still_exists(hunted_id, environment_awareness, shared_state) {
                 self.hunted_organism_id_position =
                     self.pick_new_target(shared_state, environment_awareness);

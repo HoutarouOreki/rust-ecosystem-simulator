@@ -12,8 +12,8 @@ pub struct EatingState {
     time_remaining: Duration,
 }
 
-const EATING_DURATION_S: f32 = 1.0;
-const ENERGY_FROM_EATING: f32 = 26.0;
+const EATING_DURATION_S: f32 = 10.0;
+const ENERGY_FROM_EATING: f32 = 10.0;
 
 impl OrganismState for EatingState {
     fn initialize(_shared_state: &mut SharedState) -> Self
