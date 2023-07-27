@@ -1,0 +1,128 @@
+{
+    "species": [
+        {
+            "species": {
+                "name": "Herbivore",
+                "max_energy": 256.0,
+                "max_health": 40.0,
+                "max_age": {
+                    "secs": 60,
+                    "nanos": 0
+                },
+                "energy_cost_of_birth": 10.0,
+                "health_cost_of_birth": 20.0,
+                "walk_speed_s": 2.8,
+                "photosynthesis_rate_s": 0.0,
+                "color": {
+                    "r": 0.0,
+                    "g": 0.35686275,
+                    "b": 0.5882353,
+                    "a": 1.0
+                },
+                "eats": "Plant",
+                "contained_nutrition": "Meat",
+                "eyesight_distance": 15.0,
+                "birth_distance": 1.3,
+                "birth_immunity": {
+                    "secs": 0,
+                    "nanos": 0
+                },
+                "eating_distance": 0.2
+            },
+            "amount_per_meter": 0.2
+        },
+        {
+            "species": {
+                "name": "Plant",
+                "max_energy": 150.0,
+                "max_health": 30.0,
+                "max_age": {
+                    "secs": 30,
+                    "nanos": 0
+                },
+                "energy_cost_of_birth": 10.0,
+                "health_cost_of_birth": 30.0,
+                "walk_speed_s": 0.0,
+                "photosynthesis_rate_s": 0.0,
+                "color": {
+                    "r": 0.039215688,
+                    "g": 0.27450982,
+                    "b": 0.039215688,
+                    "a": 1.0
+                },
+                "eats": "Corpse",
+                "contained_nutrition": "Plant",
+                "eyesight_distance": 40.0,
+                "birth_distance": 40.0,
+                "birth_immunity": {
+                    "secs": 5,
+                    "nanos": 0
+                },
+                "eating_distance": 55.0
+            },
+            "amount_per_meter": 0.6
+        },
+        {
+            "species": {
+                "name": "Carnivore",
+                "max_energy": 120.0,
+                "max_health": 70.0,
+                "max_age": {
+                    "secs": 70,
+                    "nanos": 0
+                },
+                "energy_cost_of_birth": 20.0,
+                "health_cost_of_birth": 20.0,
+                "walk_speed_s": 12.9,
+                "photosynthesis_rate_s": 0.0,
+                "color": {
+                    "r": 0.78431374,
+                    "g": 0.0,
+                    "b": 0.0,
+                    "a": 1.0
+                },
+                "eats": "Meat",
+                "contained_nutrition": "Meat",
+                "eyesight_distance": 18.0,
+                "birth_distance": 0.1,
+                "birth_immunity": {
+                    "secs": 0,
+                    "nanos": 0
+                },
+                "eating_distance": 0.2
+            },
+            "amount_per_meter": 0.04
+        },
+        {
+            "species": {
+                "name": "Scavenger",
+                "max_energy": 150.0,
+                "max_health": 30.0,
+                "max_age": {
+                    "secs": 250,
+                    "nanos": 0
+                },
+                "energy_cost_of_birth": 60.0,
+                "health_cost_of_birth": 1.0,
+                "walk_speed_s": 18.2,
+                "photosynthesis_rate_s": 0.0,
+                "color": {
+                    "r": 0.39215687,
+                    "g": 0.0,
+                    "b": 0.5882353,
+                    "a": 1.0
+                },
+                "eats": "Corpse",
+                "contained_nutrition": "None",
+                "eyesight_distance": 250.0,
+                "birth_distance": 4.7,
+                "birth_immunity": {
+                    "secs": 0,
+                    "nanos": 0
+                },
+                "eating_distance": 0.2
+            },
+            "amount_per_meter": 0.01
+        }
+    ]
+}

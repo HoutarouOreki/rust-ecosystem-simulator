@@ -9,6 +9,7 @@ mod organisms;
 pub mod vector_helper;
 
 use std::time::Duration;
+use std::{env, fs};
 
 use application_context::ApplicationContext;
 use configurations::generation_configuration::GenerationConfiguration;
@@ -44,20 +45,60 @@ struct MyGame {
     time_to_simulate: Duration,
     time_per_step: Duration,
     environment: Environment,
+    species_gen_config: GenerationConfiguration,
     application_context: ApplicationContext,
     speed: u32,
 }
 
 impl MyGame {
     pub fn new(ctx: &mut Context) -> MyGame {
-        let generation_configuration = generate_default_generation_configuration();
+        let species_gen_config = Self::get_generation_config();
+
         MyGame {
+            species_gen_config: species_gen_config.to_owned(),
             time_to_simulate: Duration::ZERO,
-            environment: Environment::new(ctx, &generation_configuration),
+            environment: Environment::new(ctx, &species_gen_config),
             time_per_step: Duration::from_secs_f32(0.05),
             application_context: ApplicationContext::default(),
             speed: 1,
         }
+    }
+
+    fn print_env_generation_config(&self) {
+        let serialization = serde_json::to_string(&self.species_gen_config);
+
+        if let Ok(json) = serialization {
+            println!("{}", json);
+        } else {
+            println!("Serialization failed.");
+        }
+    }
+
+    fn load_env_generation_config() -> Option<GenerationConfiguration> {
+        if let Some(curr_dir) = env::current_dir().ok()?.to_str() {
+            let assets_dir = curr_dir.to_owned() + "/assets";
+            let config_file = assets_dir + "/default_species_config.json";
+            let json = fs::read_to_string(config_file).ok()?;
+            let config = serde_json::from_str(json.as_str()).ok()?;
+            return config;
+        }
+        None
+    }
+
+    fn get_generation_config() -> GenerationConfiguration {
+        if let Some(config) = Self::load_env_generation_config() {
+            config
+        } else {
+            println!("Loading species config json failed.");
+            generate_default_generation_configuration()
+        }
+    }
+
+    fn restart(&mut self, ctx: &mut Context) {
+        let species_gen_config = Self::get_generation_config();
+        self.species_gen_config = species_gen_config.to_owned();
+
+        self.environment = Environment::new(ctx, &species_gen_config);
     }
 }
 
@@ -174,6 +215,8 @@ impl EventHandler for MyGame {
                     self.time_per_step = new_value.max(time_per_step_step);
                 }
             }
+            Some(VirtualKeyCode::E) => self.print_env_generation_config(),
+            Some(VirtualKeyCode::R) => self.restart(_ctx),
             _ => self.environment.key_down_event(_ctx, input, _repeated),
         };
         Ok(())

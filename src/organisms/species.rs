@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 use ggez::graphics::Color;
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Species {
     pub name: String,
     pub max_energy: f32,
@@ -21,7 +22,7 @@ pub struct Species {
     pub eating_distance: f32,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Nutrition {
     None,
     Plant,

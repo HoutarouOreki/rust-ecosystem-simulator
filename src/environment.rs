@@ -302,17 +302,12 @@ impl Environment {
         distance
     }
 
-    fn calculate_first_line(zoom: f32, env_boundary: f32, lines_distance: f32) -> f32 {
+    fn calculate_first_line(env_boundary: f32, lines_distance: f32) -> f32 {
         if env_boundary > 0.0 {
             return env_boundary;
         }
 
         let skips = (-env_boundary / lines_distance).floor();
-
-        println!(
-            "env_b: {}, l_d: {}, zoom: {}, skips: {}",
-            env_boundary, lines_distance, zoom, skips
-        );
 
         env_boundary + lines_distance * skips
     }
@@ -328,9 +323,9 @@ impl Environment {
 
         let lines_distance = Self::calculate_lines_distance(self.zoom);
         let x_start =
-            Self::calculate_first_line(self.zoom, environment_screen_rect.x, lines_distance);
+            Self::calculate_first_line(environment_screen_rect.x, lines_distance);
         let y_start =
-            Self::calculate_first_line(self.zoom, environment_screen_rect.y, lines_distance);
+            Self::calculate_first_line(environment_screen_rect.y, lines_distance);
 
         let (vertical_line, horizontal_line) =
             self.vertical_horizontal_lines
