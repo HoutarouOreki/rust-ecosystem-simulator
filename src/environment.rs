@@ -291,13 +291,30 @@ impl Environment {
         .unwrap()
     }
 
-    fn calculate_first_line(zoom: f32, env_boundary: f32) -> f32 {
+    fn calculate_lines_distance(zoom: f32) -> f32 {
+        let min_distance = 64.0;
+
+        let mut distance = 0.0;
+        while distance < min_distance {
+            distance += zoom;
+        }
+
+        distance
+    }
+
+    fn calculate_first_line(zoom: f32, env_boundary: f32, lines_distance: f32) -> f32 {
         if env_boundary > 0.0 {
             return env_boundary;
         }
 
-        let skips = (env_boundary / zoom).abs().floor();
-        env_boundary + zoom * skips
+        let skips = (-env_boundary / lines_distance).floor();
+
+        println!(
+            "env_b: {}, l_d: {}, zoom: {}, skips: {}",
+            env_boundary, lines_distance, zoom, skips
+        );
+
+        env_boundary + lines_distance * skips
     }
 
     fn draw_lines(
@@ -309,8 +326,11 @@ impl Environment {
     ) {
         let color = Color::from_rgb(30, 30, 30);
 
-        let x_start = Self::calculate_first_line(self.zoom, environment_screen_rect.x);
-        let y_start = Self::calculate_first_line(self.zoom, environment_screen_rect.y);
+        let lines_distance = Self::calculate_lines_distance(self.zoom);
+        let x_start =
+            Self::calculate_first_line(self.zoom, environment_screen_rect.x, lines_distance);
+        let y_start =
+            Self::calculate_first_line(self.zoom, environment_screen_rect.y, lines_distance);
 
         let (vertical_line, horizontal_line) =
             self.vertical_horizontal_lines
@@ -328,6 +348,7 @@ impl Environment {
             self.zoom,
             y_start,
             parent_screen_rect.bottom(),
+            lines_distance,
         );
 
         canvas.draw_instanced_mesh(
@@ -344,6 +365,7 @@ impl Environment {
             self.zoom,
             x_start,
             parent_screen_rect.right(),
+            lines_distance,
         );
 
         canvas.draw_instanced_mesh(
@@ -359,9 +381,8 @@ impl Environment {
         zoom: f32,
         start: f32,
         end: f32,
+        lines_distance: f32,
     ) {
-        let min_distance = 64.0;
-
         let mut pos = start;
         while pos <= end {
             let mut draw_param = DrawParam::default().dest(Point2 { x: pos, y: 0.0 });
@@ -369,12 +390,7 @@ impl Environment {
                 draw_param = draw_param.dest(Point2 { x: 0.0, y: pos })
             }
             lines_mesh.push(draw_param);
-
-            let mut distance = 0.0;
-            while distance < min_distance {
-                distance += zoom;
-            }
-            pos += distance;
+            pos += lines_distance;
         }
     }
 
