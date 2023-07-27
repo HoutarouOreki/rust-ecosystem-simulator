@@ -345,7 +345,6 @@ impl Environment {
         Self::recreate_lines_instance_mesh(
             &mut self.lines_horizontal_mesh,
             true,
-            self.zoom,
             y_start,
             parent_screen_rect.bottom(),
             lines_distance,
@@ -362,7 +361,6 @@ impl Environment {
         Self::recreate_lines_instance_mesh(
             &mut self.lines_vertical_mesh,
             false,
-            self.zoom,
             x_start,
             parent_screen_rect.right(),
             lines_distance,
@@ -378,7 +376,6 @@ impl Environment {
     fn recreate_lines_instance_mesh(
         lines_mesh: &mut InstanceArray,
         horizontal: bool,
-        zoom: f32,
         start: f32,
         end: f32,
         lines_distance: f32,
