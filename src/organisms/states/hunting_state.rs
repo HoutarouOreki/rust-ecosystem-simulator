@@ -1,9 +1,11 @@
 use std::time::Duration;
 
 use ggez::mint::Point2;
+use rand::seq::IteratorRandom;
 
 use crate::{
-    environment_awareness::EnvironmentAwareness, organisms::organism_result::OrganismResult,
+    environment_awareness::EnvironmentAwareness,
+    organisms::{organism_result::OrganismResult, species::HuntingBehavior},
     vector_helper,
 };
 
@@ -27,24 +29,30 @@ impl HuntingState {
         let mut closest: Option<ForeignerInfo> = Option::None;
 
         let foreigners_in_radius = get_foreigners_in_eyesight(environment_awareness, shared_state);
-        for foreigner_info in foreigners_in_radius {
-            if foreigner_info.species_name == shared_state.species.name
-                || foreigner_info.contains_nutrition != shared_state.species.eats
-            {
-                continue;
-            }
 
-            if !Self::is_close_enough_to_start_hunting(shared_state, foreigner_info) {
-                continue;
-            }
-            if closest.is_none()
-                || Self::is_closer_than(
-                    shared_state.position,
-                    foreigner_info.position,
-                    closest.to_owned().unwrap().position,
-                )
-            {
-                closest = Some(foreigner_info.clone());
+        if shared_state.species.hunting_behavior == HuntingBehavior::Random {
+            closest = foreigners_in_radius.choose(&mut rand::thread_rng()).cloned();
+        } else {
+            for foreigner_info in foreigners_in_radius {
+                if foreigner_info.species_name == shared_state.species.name
+                    || foreigner_info.contains_nutrition != shared_state.species.eats
+                {
+                    continue;
+                }
+
+                if !Self::is_close_enough_to_start_hunting(shared_state, foreigner_info) {
+                    continue;
+                }
+
+                if closest.is_none()
+                    || Self::is_closer_than(
+                        shared_state.position,
+                        foreigner_info.position,
+                        closest.to_owned().unwrap().position,
+                    )
+                {
+                    closest = Some(foreigner_info.clone());
+                }
             }
         }
 
@@ -55,7 +63,10 @@ impl HuntingState {
         }
     }
 
-    fn is_close_enough_to_start_hunting(shared_state: &SharedState, foreigner_info: &ForeignerInfo) -> bool {
+    fn is_close_enough_to_start_hunting(
+        shared_state: &SharedState,
+        foreigner_info: &ForeignerInfo,
+    ) -> bool {
         vector_helper::distance(shared_state.position, foreigner_info.position)
             <= shared_state.species.eyesight_distance
     }

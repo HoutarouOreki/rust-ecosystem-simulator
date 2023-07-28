@@ -21,14 +21,15 @@
                 },
                 "eats": "Plant",
                 "contained_nutrition": "Meat",
-                "eyesight_distance": 15.0,
+                "eyesight_distance": 35.0,
                 "birth_distance": 10.3,
                 "birth_immunity": {
                     "secs": 10,
                     "nanos": 0
                 },
                 "eating_distance": 1.2,
-                "max_per_meter": 0.0
+                "max_per_meter": 0.0,
+                "hunting_behavior": "Random"
             },
             "amount_per_meter": 0.3
         },
@@ -60,7 +61,8 @@
                     "nanos": 0
                 },
                 "eating_distance": 0.0,
-                "max_per_meter": 0.2
+                "max_per_meter": 0.2,
+                "hunting_behavior": "Random"
             },
             "amount_per_meter": 1.0
         },
@@ -70,12 +72,12 @@
                 "max_energy": 120.0,
                 "max_health": 70.0,
                 "max_age": {
-                    "secs": 70,
+                    "secs": 150,
                     "nanos": 0
                 },
-                "energy_cost_of_birth": 8.0,
+                "energy_cost_of_birth": 4.0,
                 "health_cost_of_birth": 10.0,
-                "walk_speed_s": 12.9,
+                "walk_speed_s": 8.9,
                 "photosynthesis_rate_s": 0.0,
                 "color": {
                     "r": 0.78431374,
@@ -85,21 +87,22 @@
                 },
                 "eats": "Meat",
                 "contained_nutrition": "Meat",
-                "eyesight_distance": 18.0,
-                "birth_distance": 5.1,
+                "eyesight_distance": 5.0,
+                "birth_distance": 1.1,
                 "birth_immunity": {
                     "secs": 0,
                     "nanos": 0
                 },
-                "eating_distance": 2.2,
-                "max_per_meter": 0.0
+                "eating_distance": 5.2,
+                "max_per_meter": 0.0,
+                "hunting_behavior": "Closest"
             },
-            "amount_per_meter": 0.08
+            "amount_per_meter": 0.04
         },
         {
             "species": {
                 "name": "Scavenger",
-                "max_energy": 150.0,
+                "max_energy": 250.0,
                 "max_health": 30.0,
                 "max_age": {
                     "secs": 250,
@@ -107,7 +110,7 @@
                 },
                 "energy_cost_of_birth": 60.0,
                 "health_cost_of_birth": 1.0,
-                "walk_speed_s": 18.2,
+                "walk_speed_s": 26.2,
                 "photosynthesis_rate_s": 0.0,
                 "color": {
                     "r": 0.39215687,
@@ -124,9 +127,10 @@
                     "nanos": 0
                 },
                 "eating_distance": 0.2,
-                "max_per_meter": 0.0
+                "max_per_meter": 0.0,
+                "hunting_behavior": "Random"
             },
-            "amount_per_meter": 0.01
+            "amount_per_meter": 0.02
         }
     ]
 }

@@ -16,7 +16,7 @@ use crate::{
 
 use super::{
     organism_result::OrganismResult,
-    species::{Nutrition, Species},
+    species::{HuntingBehavior, Nutrition, Species},
     states::{
         dead_state::DeadState, idle_state::IdleState, organism_state::OrganismState,
         shared_state::SharedState,
@@ -169,6 +169,7 @@ impl Organism {
             birth_immunity: Duration::ZERO,
             eating_distance: 0.2,
             max_per_meter: 0.0,
+            hunting_behavior: HuntingBehavior::Closest,
         });
         s.shared_state.position = organism.position();
         s.state = DeadState::new_boxed();

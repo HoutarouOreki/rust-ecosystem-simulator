@@ -21,6 +21,7 @@ pub struct Species {
     pub birth_immunity: Duration,
     pub eating_distance: f32,
     pub max_per_meter: f32,
+    pub hunting_behavior: HuntingBehavior,
 }
 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -29,4 +30,10 @@ pub enum Nutrition {
     Plant,
     Meat,
     Corpse,
+}
+
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum HuntingBehavior {
+    Closest,
+    Random,
 }

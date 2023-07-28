@@ -21,7 +21,7 @@ use ggez::graphics::{self, BlendMode, Color, DrawParam, Text};
 
 use ggez::winit::event::VirtualKeyCode;
 use ggez::{Context, ContextBuilder, GameResult};
-use organisms::species::{Nutrition, Species};
+use organisms::species::{HuntingBehavior, Nutrition, Species};
 
 fn main() {
     // Make a Context.
@@ -117,12 +117,13 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
                     color: Color::from_rgb(0, 91, 150),
                     contained_nutrition: Nutrition::Meat,
                     eats: Nutrition::Plant,
-                    eyesight_distance: 15.0,
+                    eyesight_distance: 25.0,
                     birth_distance: 1.3,
                     birth_immunity: Duration::ZERO,
                     health_cost_of_birth: 20.0,
                     eating_distance: 0.2,
                     max_per_meter: 0.0,
+                    hunting_behavior: HuntingBehavior::Random,
                 },
                 amount_per_meter: 0.2,
             },
@@ -145,6 +146,7 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
                     eating_distance: 55.0,
                     // should increase eating distance to eat corpses
                     max_per_meter: 2.0,
+                    hunting_behavior: HuntingBehavior::Random,
                 },
                 amount_per_meter: 0.6,
             },
@@ -166,6 +168,7 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
                     birth_immunity: Duration::ZERO,
                     eating_distance: 0.2,
                     max_per_meter: 0.0,
+                    hunting_behavior: HuntingBehavior::Random,
                 },
                 amount_per_meter: 0.04,
             },
@@ -187,6 +190,7 @@ fn generate_default_generation_configuration() -> GenerationConfiguration {
                     birth_immunity: Duration::ZERO,
                     eating_distance: 0.2,
                     max_per_meter: 0.0,
+                    hunting_behavior: HuntingBehavior::Random,
                 },
                 amount_per_meter: 0.01,
             },
