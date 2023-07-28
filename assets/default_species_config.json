@@ -6,12 +6,12 @@
                 "max_energy": 256.0,
                 "max_health": 40.0,
                 "max_age": {
-                    "secs": 60,
+                    "secs": 80,
                     "nanos": 0
                 },
                 "energy_cost_of_birth": 10.0,
                 "health_cost_of_birth": 20.0,
-                "walk_speed_s": 2.8,
+                "walk_speed_s": 4.8,
                 "photosynthesis_rate_s": 0.0,
                 "color": {
                     "r": 0.0,
@@ -22,14 +22,15 @@
                 "eats": "Plant",
                 "contained_nutrition": "Meat",
                 "eyesight_distance": 15.0,
-                "birth_distance": 1.3,
+                "birth_distance": 10.3,
                 "birth_immunity": {
-                    "secs": 0,
+                    "secs": 10,
                     "nanos": 0
                 },
-                "eating_distance": 0.2
+                "eating_distance": 1.2,
+                "max_per_meter": 0.0
             },
-            "amount_per_meter": 0.2
+            "amount_per_meter": 0.3
         },
         {
             "species": {
@@ -41,9 +42,9 @@
                     "nanos": 0
                 },
                 "energy_cost_of_birth": 10.0,
-                "health_cost_of_birth": 30.0,
+                "health_cost_of_birth": 10.0,
                 "walk_speed_s": 0.0,
-                "photosynthesis_rate_s": 0.0,
+                "photosynthesis_rate_s": 10.0,
                 "color": {
                     "r": 0.039215688,
                     "g": 0.27450982,
@@ -52,15 +53,16 @@
                 },
                 "eats": "Corpse",
                 "contained_nutrition": "Plant",
-                "eyesight_distance": 40.0,
-                "birth_distance": 40.0,
+                "eyesight_distance": 0.0,
+                "birth_distance": 20.0,
                 "birth_immunity": {
-                    "secs": 5,
+                    "secs": 8,
                     "nanos": 0
                 },
-                "eating_distance": 55.0
+                "eating_distance": 0.0,
+                "max_per_meter": 0.2
             },
-            "amount_per_meter": 0.6
+            "amount_per_meter": 1.0
         },
         {
             "species": {
@@ -71,8 +73,8 @@
                     "secs": 70,
                     "nanos": 0
                 },
-                "energy_cost_of_birth": 20.0,
-                "health_cost_of_birth": 20.0,
+                "energy_cost_of_birth": 8.0,
+                "health_cost_of_birth": 10.0,
                 "walk_speed_s": 12.9,
                 "photosynthesis_rate_s": 0.0,
                 "color": {
@@ -84,14 +86,15 @@
                 "eats": "Meat",
                 "contained_nutrition": "Meat",
                 "eyesight_distance": 18.0,
-                "birth_distance": 0.1,
+                "birth_distance": 5.1,
                 "birth_immunity": {
                     "secs": 0,
                     "nanos": 0
                 },
-                "eating_distance": 0.2
+                "eating_distance": 2.2,
+                "max_per_meter": 0.0
             },
-            "amount_per_meter": 0.04
+            "amount_per_meter": 0.08
         },
         {
             "species": {
@@ -120,7 +123,8 @@
                     "secs": 0,
                     "nanos": 0
                 },
-                "eating_distance": 0.2
+                "eating_distance": 0.2,
+                "max_per_meter": 0.0
             },
             "amount_per_meter": 0.01
         }

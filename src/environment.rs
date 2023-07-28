@@ -25,7 +25,7 @@ use crate::{
     vector_helper,
 };
 
-const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 200f32;
+const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 50f32;
 const WORLD_SIZE: f32 =
     (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
@@ -102,6 +102,23 @@ impl Environment {
         self.time += delta;
     }
 
+    fn can_add_children(organism: &Organism, environment_awareness: &EnvironmentAwareness) -> bool {
+        let checked_distance = organism.shared_state().species.birth_distance * 1.0;
+        let max_amount_others_of_same_species =
+            organism.shared_state().species.max_per_meter * checked_distance * checked_distance;
+
+        if max_amount_others_of_same_species == 0.0 {
+            return true;
+        }
+
+        let others = environment_awareness.get_radius_around(organism.position(), checked_distance);
+        let others_of_same_species =
+            others.filter(|x| x.species_name == organism.shared_state().species.name);
+        let amount_others_of_same_species = others_of_same_species.count() as f32;
+
+        amount_others_of_same_species < max_amount_others_of_same_species
+    }
+
     fn simulate_organism(
         organism: &mut Organism,
         delta: Duration,
@@ -110,10 +127,13 @@ impl Environment {
     ) -> OrganismsChange {
         let result = organism.simulate(delta, environment_awareness, application_context);
         match result {
-            OrganismResult::HadChildren { amount } => {
+            OrganismResult::HadChildren { amount }
+                if Self::can_add_children(organism, environment_awareness) =>
+            {
                 let vec = create_organism_children(amount, organism);
                 OrganismsChange::Add(vec)
             }
+            OrganismResult::HadChildren { amount: _ } => OrganismsChange::None,
             OrganismResult::AteOtherOrganism { other_organism_id } => {
                 OrganismsChange::Remove(other_organism_id)
             }
@@ -268,7 +288,7 @@ impl Environment {
     }
 
     fn get_new_circle_mesh(gfx: &impl Has<GraphicsContext>) -> Mesh {
-        let size = 2.0;
+        let size = 10.0;
         Mesh::new_circle(
             gfx,
             DrawMode::Fill(FillOptions::DEFAULT),
@@ -322,10 +342,8 @@ impl Environment {
         let color = Color::from_rgb(30, 30, 30);
 
         let lines_distance = Self::calculate_lines_distance(self.zoom);
-        let x_start =
-            Self::calculate_first_line(environment_screen_rect.x, lines_distance);
-        let y_start =
-            Self::calculate_first_line(environment_screen_rect.y, lines_distance);
+        let x_start = Self::calculate_first_line(environment_screen_rect.x, lines_distance);
+        let y_start = Self::calculate_first_line(environment_screen_rect.y, lines_distance);
 
         let (vertical_line, horizontal_line) =
             self.vertical_horizontal_lines

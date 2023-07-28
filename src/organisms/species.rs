@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use ggez::graphics::Color;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Species {
@@ -20,6 +20,7 @@ pub struct Species {
     pub birth_distance: f32,
     pub birth_immunity: Duration,
     pub eating_distance: f32,
+    pub max_per_meter: f32,
 }
 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]

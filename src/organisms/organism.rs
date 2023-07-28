@@ -168,6 +168,7 @@ impl Organism {
             birth_distance: 1.0,
             birth_immunity: Duration::ZERO,
             eating_distance: 0.2,
+            max_per_meter: 0.0,
         });
         s.shared_state.position = organism.position();
         s.state = DeadState::new_boxed();
