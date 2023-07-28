@@ -50,6 +50,7 @@ pub struct Environment {
     lines_horizontal_mesh: InstanceArray,
     lines_vertical_mesh: InstanceArray,
     simulate_every_n_organism: usize,
+    cull_organisms_outside_view: bool,
 }
 
 impl Environment {
@@ -100,6 +101,7 @@ impl Environment {
         self.organisms.append(&mut self.to_add);
         self.step += 1;
         self.time += delta;
+        self.cull_organisms_outside_view = false;
     }
 
     fn can_add_children(organism: &Organism, environment_awareness: &EnvironmentAwareness) -> bool {
@@ -178,6 +180,7 @@ impl Environment {
             lines_horizontal_mesh: InstanceArray::new(&ctx.gfx, Option::None),
             lines_vertical_mesh: InstanceArray::new(&ctx.gfx, Option::None),
             simulate_every_n_organism: 1,
+            cull_organisms_outside_view: false,
         }
     }
 
@@ -256,7 +259,12 @@ impl Environment {
 
         self.organisms_mesh
             .set(self.organisms.iter().filter_map(|o| {
-                o.get_draw_param(&environment_screen_rect, self.zoom, &visibility_rect)
+                let draw_param =
+                    o.get_draw_param(&environment_screen_rect, self.zoom, &visibility_rect);
+                if self.cull_organisms_outside_view && draw_param.is_none() {
+                    self.to_remove.insert(o.id());
+                }
+                draw_param
             }));
         // canvas.draw(&self.organisms_mesh, DrawParam::default());
         canvas.draw_instanced_mesh(
@@ -460,6 +468,7 @@ impl Environment {
                         self.simulate_every_n_organism += 1;
                     }
                 }
+                VirtualKeyCode::X => self.cull_organisms_outside_view = true,
                 _ => {}
             }
         }
