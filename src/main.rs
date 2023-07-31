@@ -230,6 +230,15 @@ impl EventHandler for MyGame {
         Ok(())
     }
 
+    fn key_up_event(
+        &mut self,
+        ctx: &mut Context,
+        input: ggez::input::keyboard::KeyInput,
+    ) -> GameResult {
+        self.environment.key_up_event(ctx, input);
+        Ok(())
+    }
+
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         self.time_to_simulate += ctx.time.delta() * self.speed;
 

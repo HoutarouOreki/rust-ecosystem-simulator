@@ -51,6 +51,7 @@ pub struct Environment {
     lines_vertical_mesh: InstanceArray,
     simulate_every_n_organism: usize,
     cull_organisms_outside_view: bool,
+    zoom_velocity: f32,
 }
 
 impl Environment {
@@ -181,6 +182,7 @@ impl Environment {
             lines_vertical_mesh: InstanceArray::new(&ctx.gfx, Option::None),
             simulate_every_n_organism: 1,
             cull_organisms_outside_view: false,
+            zoom_velocity: 0.0,
         }
     }
 
@@ -413,12 +415,7 @@ impl Environment {
     }
 
     pub fn handle_camera_controls(&mut self, ctx: &Context) {
-        if ctx.keyboard.is_key_pressed(VirtualKeyCode::Plus) {
-            self.zoom += self.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
-        }
-        if ctx.keyboard.is_key_pressed(VirtualKeyCode::Minus) {
-            self.zoom -= self.zoom * ZOOM_SPEED * ctx.time.delta().as_secs_f32();
-        }
+        self.zoom += self.zoom * ZOOM_SPEED * self.zoom_velocity * ctx.time.delta().as_secs_f32();
 
         if self.zoom.is_nan() {
             self.zoom = 1.0;
@@ -458,6 +455,12 @@ impl Environment {
     ) {
         if let Some(keycode) = input.keycode {
             match keycode {
+                VirtualKeyCode::Plus | VirtualKeyCode::Equals if !_repeated => {
+                    self.zoom_velocity += 1.0;
+                }
+                VirtualKeyCode::Minus | VirtualKeyCode::Underline if !_repeated => {
+                    self.zoom_velocity -= 1.0;
+                }
                 VirtualKeyCode::PageDown => {
                     if self.simulate_every_n_organism > 1 {
                         self.simulate_every_n_organism -= 1;
@@ -469,6 +472,24 @@ impl Environment {
                     }
                 }
                 VirtualKeyCode::X => self.cull_organisms_outside_view = true,
+                _ => {}
+            }
+        }
+    }
+
+    pub fn key_up_event(
+        &mut self,
+        _ctx: &mut Context,
+        input: ggez::input::keyboard::KeyInput,
+    ) {
+        if let Some(keycode) = input.keycode {
+            match keycode {
+                VirtualKeyCode::Plus | VirtualKeyCode::Equals => {
+                    self.zoom_velocity -= 1.0;
+                }
+                VirtualKeyCode::Minus | VirtualKeyCode::Underline => {
+                    self.zoom_velocity += 1.0;
+                }
                 _ => {}
             }
         }

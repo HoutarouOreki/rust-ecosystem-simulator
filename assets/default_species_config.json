@@ -22,7 +22,7 @@
                 "eats": "Plant",
                 "contained_nutrition": "Meat",
                 "eyesight_distance": 35.0,
-                "birth_distance": 10.3,
+                "birth_distance": 15.3,
                 "birth_immunity": {
                     "secs": 10,
                     "nanos": 0
@@ -31,7 +31,7 @@
                 "max_per_meter": 0.0,
                 "hunting_behavior": "Random"
             },
-            "amount_per_meter": 0.3
+            "amount_per_meter": 0.1
         },
         {
             "species": {
@@ -97,7 +97,7 @@
                 "max_per_meter": 0.0,
                 "hunting_behavior": "Closest"
             },
-            "amount_per_meter": 0.04
+            "amount_per_meter": 0.01
         },
         {
             "species": {
