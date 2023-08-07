@@ -13,19 +13,30 @@ use crate::{
 pub struct SimulationThread {
     pub last_data: SimulationData,
     organism_info_receiver: Receiver<SimulationData>,
-    simulation_request_sender: Sender<Duration>,
+    requested_time_sender: Sender<Duration>,
+    time_step_sender: Sender<Duration>,
 }
 
 impl SimulationThread {
-    pub fn new(generation_configuration: GenerationConfiguration) -> Self {
+    pub fn new(
+        initial_time_step: Duration,
+        generation_configuration: GenerationConfiguration,
+    ) -> Self {
         let (organism_info_sender, organism_info_receiver) = mpsc::channel();
-        let (simulation_request_sender, simulation_request_receiver) = mpsc::channel();
+        let (requested_time_sender, requested_time_receiver) = mpsc::channel();
+        let (time_step_sender, time_step_receiver) = mpsc::channel();
 
         thread::spawn(move || {
             let mut simulation = Simulation::new(&generation_configuration);
-            while let Ok(time_step) = simulation_request_receiver.recv() {
-                let simulation_data = simulation.run(time_step);
-                organism_info_sender.send(simulation_data).unwrap();
+            let mut time_step = initial_time_step;
+            while let Ok(requested_time) = requested_time_receiver.recv() {
+                while simulation.time < requested_time {
+                    while let Ok(changed_time_step) = time_step_receiver.try_recv() {
+                        time_step = changed_time_step;
+                    }
+                    let simulation_data = simulation.run(time_step);
+                    organism_info_sender.send(simulation_data).unwrap();
+                }
             }
         });
 
@@ -37,20 +48,23 @@ impl SimulationThread {
                 step: 0,
             },
             organism_info_receiver,
-            simulation_request_sender,
+            requested_time_sender,
+            time_step_sender,
         }
     }
 
-    pub fn advance(&self, delta: Duration) {
-        if delta != Duration::ZERO {
-            self.simulation_request_sender.send(delta).unwrap();
-        }
+    pub fn advance(&self, target_time: Duration) {
+        self.requested_time_sender.send(target_time).unwrap();
     }
 
     pub fn probe(&mut self) {
         while let Ok(data) = self.organism_info_receiver.try_recv() {
             self.last_data = data;
         }
+    }
+
+    pub fn change_time_step(&self, time_step: Duration) {
+        self.time_step_sender.send(time_step).unwrap();
     }
 }
 

@@ -24,7 +24,7 @@ pub struct Simulation {
     environment_awareness: EnvironmentAwareness,
     organism_counter: HashMap<String, u32>,
     step: u64,
-    time: Duration,
+    pub time: Duration,
     cull_organisms_outside_view: bool,
 }
 

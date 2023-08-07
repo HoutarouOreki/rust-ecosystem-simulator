@@ -55,12 +55,13 @@ struct MyGame {
 impl MyGame {
     pub fn new(ctx: &mut Context) -> MyGame {
         let species_gen_config = Self::get_generation_config();
-
+        let time_step = Duration::from_secs_f32(0.05);
+        let environment = Environment::new(ctx, time_step, &species_gen_config);
         MyGame {
-            species_gen_config: species_gen_config.to_owned(),
+            species_gen_config,
             time_to_simulate: Duration::ZERO,
-            environment: Environment::new(ctx, &species_gen_config),
-            time_per_step: Duration::from_secs_f32(0.05),
+            environment,
+            time_per_step: time_step,
             application_context: ApplicationContext::default(),
             speed: 1,
         }
@@ -100,7 +101,9 @@ impl MyGame {
         let species_gen_config = Self::get_generation_config();
         self.species_gen_config = species_gen_config.to_owned();
 
-        self.environment = Environment::new(ctx, &species_gen_config);
+        self.time_to_simulate = Duration::ZERO;
+
+        self.environment = Environment::new(ctx, self.time_per_step, &species_gen_config);
     }
 }
 
@@ -219,11 +222,15 @@ impl EventHandler for MyGame {
                 }
             }
             Some(VirtualKeyCode::Apostrophe) => self.speed += 1,
-            Some(VirtualKeyCode::Period) => self.time_per_step += time_per_step_step,
+            Some(VirtualKeyCode::Period) => {
+                self.time_per_step += time_per_step_step;
+                self.environment.change_time_step(self.time_per_step);
+            }
             Some(VirtualKeyCode::Comma) => {
                 if let Some(new_value) = self.time_per_step.checked_sub(time_per_step_step) {
                     self.time_per_step = new_value.max(time_per_step_step);
                 }
+                self.environment.change_time_step(self.time_per_step);
             }
             Some(VirtualKeyCode::E) => self.print_env_generation_config(),
             Some(VirtualKeyCode::R) => self.restart(_ctx),
@@ -247,8 +254,7 @@ impl EventHandler for MyGame {
         let steps_to_simulate: u32 =
             (self.time_to_simulate.as_millis() / self.time_per_step.as_millis()) as u32;
         self.time_to_simulate -= self.time_per_step * steps_to_simulate;
-        self.environment
-            .simulate(self.time_per_step, steps_to_simulate);
+        self.environment.simulate(steps_to_simulate);
 
         self.speed = self.speed.clamp(0, 32);
 

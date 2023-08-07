@@ -40,32 +40,35 @@ pub struct Environment {
     cull_organisms_outside_view: bool,
     zoom_velocity: f32,
     simulation_thread: SimulationThread,
+    time_step: Duration,
 }
 
 impl Environment {
-    pub fn simulate(&mut self, delta: Duration, mut steps: u32) {
+    pub fn simulate(&mut self, mut steps: u32) {
+        self.time += self.time_step * steps;
+        self.step += steps as i64;
         while steps > 0 {
-            self.advance_simulation(delta);
+            self.simulation_thread.advance(self.time);
             steps -= 1;
         }
-        self.probe_simulation();
-    }
-
-    pub fn advance_simulation(&mut self, delta: Duration) {
-        self.simulation_thread.advance(delta);
-        self.step += 1;
-        self.time += delta;
-    }
-
-    pub fn probe_simulation(&mut self) {
         self.simulation_thread.probe();
     }
 
-    pub fn new(ctx: &Context, generation_configuration: &GenerationConfiguration) -> Environment {
+    pub fn change_time_step(&mut self, time_step: Duration) {
+        self.time_step = time_step;
+        self.simulation_thread.change_time_step(time_step);
+    }
+
+    pub fn new(
+        ctx: &Context,
+        initial_time_step: Duration,
+        generation_configuration: &GenerationConfiguration,
+    ) -> Environment {
         let mut layout_info = LayoutInfo::new_centered();
         layout_info.relative_size = Point2 { x: true, y: true };
 
-        let simulation_thread = SimulationThread::new(generation_configuration.clone());
+        let simulation_thread =
+            SimulationThread::new(initial_time_step, generation_configuration.clone());
 
         Environment {
             step: 0,
@@ -88,6 +91,7 @@ impl Environment {
             cull_organisms_outside_view: false,
             zoom_velocity: 0.0,
             simulation_thread,
+            time_step: initial_time_step,
         }
     }
 
