@@ -347,7 +347,7 @@ impl Environment {
                 VirtualKeyCode::Plus | VirtualKeyCode::Equals if !_repeated => {
                     self.zoom_velocity += 1.0;
                 }
-                VirtualKeyCode::Minus | VirtualKeyCode::Underline if !_repeated => {
+                VirtualKeyCode::Minus if !_repeated => {
                     self.zoom_velocity -= 1.0;
                 }
                 VirtualKeyCode::PageDown => {
@@ -363,6 +363,9 @@ impl Environment {
                 VirtualKeyCode::X => self.cull_organisms_outside_view = true,
                 _ => {}
             }
+        } else if input.scancode == 12 && !_repeated {
+            // underscore
+            self.zoom_velocity -= 1.0;
         }
     }
 
@@ -372,11 +375,14 @@ impl Environment {
                 VirtualKeyCode::Plus | VirtualKeyCode::Equals => {
                     self.zoom_velocity -= 1.0;
                 }
-                VirtualKeyCode::Minus | VirtualKeyCode::Underline => {
+                VirtualKeyCode::Minus => {
                     self.zoom_velocity += 1.0;
                 }
                 _ => {}
             }
+        } else if input.scancode == 12 {
+            // underscore
+            self.zoom_velocity += 1.0;
         }
     }
 
