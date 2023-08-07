@@ -57,7 +57,7 @@ impl IdleState {
 
     fn pick_new_state(
         shared_state: &SharedState,
-    ) -> fn(&mut SharedState) -> Box<dyn OrganismState> {
+    ) -> fn(&mut SharedState) -> Box<dyn OrganismState + Send> {
         let total_chance = &mut Self::total_chance(shared_state);
 
         if shared_state.can_walk() && ratio(WALK_CHANCE, total_chance) {

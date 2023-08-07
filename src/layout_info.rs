@@ -98,3 +98,9 @@ impl LayoutInfo {
         }
     }
 }
+
+impl Default for LayoutInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}

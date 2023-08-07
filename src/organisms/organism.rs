@@ -26,11 +26,11 @@ use super::{
 static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 
 pub struct Organism {
-    id: u64,
-    layout_info: LayoutInfo,
-    state: Box<dyn OrganismState>,
-    shared_state: SharedState,
-    info_text: Text,
+    pub id: u64,
+    pub layout_info: LayoutInfo,
+    state: Box<dyn OrganismState + Send>,
+    pub shared_state: SharedState,
+    pub info_text: Text,
 }
 
 impl Organism {
@@ -188,7 +188,6 @@ impl Organism {
         &mut self,
         delta: Duration,
         environment_awareness: &EnvironmentAwareness,
-        application_context: &ApplicationContext,
     ) -> OrganismResult {
         if self.is_dead() {
             if self.shared_state.species.contained_nutrition == Nutrition::Corpse
@@ -225,17 +224,7 @@ impl Organism {
 
         self.shared_state.increase_age(delta);
 
-        if application_context.draw_each_organism_info {
-            self.set_display_text();
-        }
-
         state_run_result.organism_result
-    }
-
-    fn set_display_text(&mut self) {
-        let fragments = self.info_text.fragments_mut();
-        let text = Self::get_info_text(self.state.as_ref(), &self.shared_state);
-        fragments[0].text = text;
     }
 
     pub fn set_position(&mut self, position: Point2<f32>) {

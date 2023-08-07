@@ -6,6 +6,8 @@ mod environment;
 mod environment_awareness;
 mod layout_info;
 mod organisms;
+pub mod simulation;
+pub mod simulation_thread;
 pub mod vector_helper;
 
 use std::time::Duration;
@@ -242,19 +244,20 @@ impl EventHandler for MyGame {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         self.time_to_simulate += ctx.time.delta() * self.speed;
 
-        if self.time_to_simulate > self.time_per_step {
-            self.time_to_simulate -= self.time_per_step;
-            self.environment
-                .simulate(self.time_per_step, &self.application_context);
-        }
+        let steps_to_simulate: u32 =
+            (self.time_to_simulate.as_millis() / self.time_per_step.as_millis()) as u32;
+        self.time_to_simulate -= self.time_per_step * steps_to_simulate;
+        self.environment
+            .simulate(self.time_per_step, steps_to_simulate);
 
-        self.environment.handle_camera_controls(ctx);
         self.speed = self.speed.clamp(0, 32);
 
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        self.environment.handle_camera_controls(ctx);
+
         let mut canvas = graphics::Canvas::from_frame(ctx, Color::BLACK);
 
         canvas.set_blend_mode(BlendMode::REPLACE);
