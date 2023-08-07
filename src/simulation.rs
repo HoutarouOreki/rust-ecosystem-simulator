@@ -3,12 +3,19 @@ use std::{
     time::Duration,
 };
 
+use rand::{distributions::Uniform, prelude::Distribution};
+
 use crate::{
+    configurations::generation_configuration::GenerationConfiguration,
     environment_awareness::EnvironmentAwareness,
     organisms::{organism::Organism, organism_info::OrganismInfo, organism_result::OrganismResult},
     simulation_thread::SimulationData,
     vector_helper,
 };
+
+const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 100f32;
+const WORLD_SIZE: f32 =
+    (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
 pub struct Simulation {
     organisms: Vec<Organism>,
@@ -22,7 +29,12 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn new(organisms: Vec<Organism>, organism_counter: HashMap<String, u32>) -> Self {
+    pub fn new(generation_configuration: &GenerationConfiguration) -> Self {
+        let organisms = Self::generate_organisms(generation_configuration);
+        let mut organism_counter = HashMap::new();
+        for organism in organisms.iter() {
+            Self::adjust_species_counter(organism, &mut organism_counter, true, 1);
+        }
         Simulation {
             organisms,
             to_add: Vec::new(),
@@ -152,6 +164,35 @@ impl Simulation {
         } else {
             organism_counter.insert(species_name, 1);
         }
+    }
+
+    fn generate_organisms(generation_configuration: &GenerationConfiguration) -> Vec<Organism> {
+        let mut organisms = Vec::new();
+
+        let amount_multiplier = 0.1f32;
+
+        let mut rng = rand::thread_rng();
+        let coordinate_uniform = Uniform::new_inclusive(
+            -BOUNDARY_DISTANCE_FROM_CENTER,
+            BOUNDARY_DISTANCE_FROM_CENTER,
+        );
+
+        for species_configuration in &generation_configuration.species {
+            let organisms_amount =
+                (species_configuration.amount_per_meter * WORLD_SIZE * amount_multiplier) as u32;
+
+            for _ in 0..organisms_amount {
+                let mut organism =
+                    Organism::new_randomized(species_configuration.species.to_owned());
+                organism.set_position_x_y(
+                    coordinate_uniform.sample(&mut rng),
+                    coordinate_uniform.sample(&mut rng),
+                );
+                organisms.push(organism);
+            }
+        }
+
+        organisms
     }
 }
 

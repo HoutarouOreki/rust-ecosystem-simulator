@@ -33,7 +33,7 @@ pub trait OrganismState {
 
 pub enum StateTransition {
     Same,
-    Next(Box<dyn OrganismState + Send>),
+    Next(Box<dyn OrganismState>),
 }
 
 pub struct StateRunResult {
@@ -56,7 +56,7 @@ impl StateRunResult {
         }
     }
 
-    pub fn none_next(next_state: Box<dyn OrganismState + Send>) -> Self {
+    pub fn none_next(next_state: Box<dyn OrganismState>) -> Self {
         Self {
             organism_result: OrganismResult::None,
             state_transition: StateTransition::Next(next_state),

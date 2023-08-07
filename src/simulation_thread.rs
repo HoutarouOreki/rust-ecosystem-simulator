@@ -6,8 +6,8 @@ use std::{
 };
 
 use crate::{
-    organisms::{organism::Organism, organism_info::OrganismInfo},
-    simulation::Simulation,
+    configurations::generation_configuration::GenerationConfiguration,
+    organisms::organism_info::OrganismInfo, simulation::Simulation,
 };
 
 pub struct SimulationThread {
@@ -17,14 +17,12 @@ pub struct SimulationThread {
 }
 
 impl SimulationThread {
-    pub fn new(organisms: Vec<Organism>, organism_counter: HashMap<String, u32>) -> Self {
-        let organism_infos = OrganismInfo::from_organisms(&organisms);
-
+    pub fn new(generation_configuration: GenerationConfiguration) -> Self {
         let (organism_info_sender, organism_info_receiver) = mpsc::channel();
         let (simulation_request_sender, simulation_request_receiver) = mpsc::channel();
 
         thread::spawn(move || {
-            let mut simulation = Simulation::new(organisms, organism_counter);
+            let mut simulation = Simulation::new(&generation_configuration);
             while let Ok(time_step) = simulation_request_receiver.recv() {
                 let simulation_data = simulation.run(time_step);
                 organism_info_sender.send(simulation_data).unwrap();
@@ -33,7 +31,7 @@ impl SimulationThread {
 
         SimulationThread {
             last_data: SimulationData {
-                organisms: organism_infos,
+                organisms: Vec::new(),
                 organism_counter: HashMap::new(),
                 time: Duration::ZERO,
                 step: 0,

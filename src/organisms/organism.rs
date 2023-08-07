@@ -28,7 +28,7 @@ static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 pub struct Organism {
     pub id: u64,
     pub layout_info: LayoutInfo,
-    state: Box<dyn OrganismState + Send>,
+    state: Box<dyn OrganismState>,
     pub shared_state: SharedState,
     pub info_text: Text,
 }

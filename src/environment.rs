@@ -14,17 +14,12 @@ use ggez::{
     winit::event::VirtualKeyCode,
     Context,
 };
-use rand::{distributions::Uniform, prelude::Distribution};
 
 use crate::{
     application_context::ApplicationContext,
     configurations::generation_configuration::GenerationConfiguration, layout_info::LayoutInfo,
-    organisms::organism::Organism, simulation_thread::SimulationThread,
+    simulation_thread::SimulationThread,
 };
-
-const BOUNDARY_DISTANCE_FROM_CENTER: f32 = 100f32;
-const WORLD_SIZE: f32 =
-    (2.0 * BOUNDARY_DISTANCE_FROM_CENTER) * (2.0 * BOUNDARY_DISTANCE_FROM_CENTER);
 
 const CAMERA_SPEED: f32 = 400.0;
 const ZOOM_SPEED: f32 = 1.4;
@@ -67,17 +62,10 @@ impl Environment {
     }
 
     pub fn new(ctx: &Context, generation_configuration: &GenerationConfiguration) -> Environment {
-        let organisms = Self::generate_organisms(generation_configuration);
-
-        let mut organism_counter = HashMap::new();
-        for organism in organisms.iter() {
-            Self::adjust_species_counter(organism, &mut organism_counter, true, 1);
-        }
-
         let mut layout_info = LayoutInfo::new_centered();
         layout_info.relative_size = Point2 { x: true, y: true };
 
-        let simulation_thread = SimulationThread::new(organisms, organism_counter.clone());
+        let simulation_thread = SimulationThread::new(generation_configuration.clone());
 
         Environment {
             step: 0,
@@ -101,35 +89,6 @@ impl Environment {
             zoom_velocity: 0.0,
             simulation_thread,
         }
-    }
-
-    fn generate_organisms(generation_configuration: &GenerationConfiguration) -> Vec<Organism> {
-        let mut organisms = Vec::new();
-
-        let amount_multiplier = 0.1f32;
-
-        let mut rng = rand::thread_rng();
-        let coordinate_uniform = Uniform::new_inclusive(
-            -BOUNDARY_DISTANCE_FROM_CENTER,
-            BOUNDARY_DISTANCE_FROM_CENTER,
-        );
-
-        for species_configuration in &generation_configuration.species {
-            let organisms_amount =
-                (species_configuration.amount_per_meter * WORLD_SIZE * amount_multiplier) as u32;
-
-            for _ in 0..organisms_amount {
-                let mut organism =
-                    Organism::new_randomized(species_configuration.species.to_owned());
-                organism.set_position_x_y(
-                    coordinate_uniform.sample(&mut rng),
-                    coordinate_uniform.sample(&mut rng),
-                );
-                organisms.push(organism);
-            }
-        }
-
-        organisms
     }
 
     pub fn draw(
@@ -414,25 +373,6 @@ impl Environment {
                 }
                 _ => {}
             }
-        }
-    }
-
-    fn adjust_species_counter(
-        organism: &Organism,
-        organism_counter: &mut HashMap<String, u32>,
-        increase: bool,
-        amount: u32,
-    ) {
-        let species_name = organism.shared_state().clone().species.name;
-        let species_count = organism_counter.get_mut(&organism.shared_state().clone().species.name);
-        if let Some(count) = species_count {
-            if increase {
-                *count += amount;
-            } else {
-                *count -= amount;
-            }
-        } else {
-            organism_counter.insert(species_name, 1);
         }
     }
 }
