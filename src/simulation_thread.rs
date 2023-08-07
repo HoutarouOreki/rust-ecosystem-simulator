@@ -13,8 +13,7 @@ use crate::{
 pub struct SimulationThread {
     pub last_data: SimulationData,
     organism_info_receiver: Receiver<SimulationData>,
-    requested_time_sender: Sender<Duration>,
-    time_step_sender: Sender<Duration>,
+    message_sender: Sender<SimulationThreadMessage>,
 }
 
 impl SimulationThread {
@@ -23,19 +22,32 @@ impl SimulationThread {
         generation_configuration: GenerationConfiguration,
     ) -> Self {
         let (organism_info_sender, organism_info_receiver) = mpsc::channel();
-        let (requested_time_sender, requested_time_receiver) = mpsc::channel();
-        let (time_step_sender, time_step_receiver) = mpsc::channel();
+        let (message_sender, message_receiver) = mpsc::channel();
 
         thread::spawn(move || {
             let mut simulation = Simulation::new(&generation_configuration);
             let mut time_step = initial_time_step;
-            while let Ok(requested_time) = requested_time_receiver.recv() {
-                while simulation.time < requested_time {
-                    while let Ok(changed_time_step) = time_step_receiver.try_recv() {
-                        time_step = changed_time_step;
-                    }
+            let mut target_time = Duration::ZERO;
+
+            loop {
+                if simulation.time < target_time {
                     let simulation_data = simulation.run(time_step);
                     organism_info_sender.send(simulation_data).unwrap();
+                }
+
+                while let Ok(message) = message_receiver.try_recv() {
+                    match message {
+                        SimulationThreadMessage::AdvanceTo(new_target_time) => {
+                            target_time = new_target_time;
+                        }
+                        SimulationThreadMessage::ChangeTimeStep(new_time_step) => {
+                            time_step = new_time_step;
+                        }
+                        SimulationThreadMessage::Restart(new_generation_configuration) => {
+                            simulation = Simulation::new(&new_generation_configuration);
+                            target_time = Duration::ZERO;
+                        }
+                    }
                 }
             }
         });
@@ -48,13 +60,14 @@ impl SimulationThread {
                 step: 0,
             },
             organism_info_receiver,
-            requested_time_sender,
-            time_step_sender,
+            message_sender,
         }
     }
 
     pub fn advance(&self, target_time: Duration) {
-        self.requested_time_sender.send(target_time).unwrap();
+        self.message_sender
+            .send(SimulationThreadMessage::AdvanceTo(target_time))
+            .unwrap();
     }
 
     pub fn probe(&mut self) {
@@ -64,7 +77,15 @@ impl SimulationThread {
     }
 
     pub fn change_time_step(&self, time_step: Duration) {
-        self.time_step_sender.send(time_step).unwrap();
+        self.message_sender
+            .send(SimulationThreadMessage::ChangeTimeStep(time_step))
+            .unwrap();
+    }
+
+    pub fn restart(&self, species_gen_config: GenerationConfiguration) {
+        self.message_sender
+            .send(SimulationThreadMessage::Restart(species_gen_config))
+            .unwrap();
     }
 }
 
@@ -74,4 +95,10 @@ pub struct SimulationData {
     pub organism_counter: HashMap<String, u32>,
     pub time: Duration,
     pub step: u64,
+}
+
+enum SimulationThreadMessage {
+    AdvanceTo(Duration),
+    ChangeTimeStep(Duration),
+    Restart(GenerationConfiguration),
 }

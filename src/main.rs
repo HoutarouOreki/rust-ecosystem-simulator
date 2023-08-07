@@ -97,13 +97,13 @@ impl MyGame {
         }
     }
 
-    fn restart(&mut self, ctx: &mut Context) {
+    fn restart(&mut self) {
         let species_gen_config = Self::get_generation_config();
         self.species_gen_config = species_gen_config.to_owned();
 
         self.time_to_simulate = Duration::ZERO;
 
-        self.environment = Environment::new(ctx, self.time_per_step, &species_gen_config);
+        self.environment.restart(species_gen_config);
     }
 }
 
@@ -233,7 +233,7 @@ impl EventHandler for MyGame {
                 self.environment.change_time_step(self.time_per_step);
             }
             Some(VirtualKeyCode::E) => self.print_env_generation_config(),
-            Some(VirtualKeyCode::R) => self.restart(_ctx),
+            Some(VirtualKeyCode::R) => self.restart(),
             _ => self.environment.key_down_event(_ctx, input, _repeated),
         };
         Ok(())

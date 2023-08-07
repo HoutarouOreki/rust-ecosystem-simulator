@@ -165,7 +165,7 @@ impl Environment {
                 {}\nnth organism: {}",
                 self.simulation_thread.last_data.step,
                 self.step,
-                self.step as u64 - self.simulation_thread.last_data.step,
+                self.step - self.simulation_thread.last_data.step as i64,
                 self.simulation_thread.last_data.time.as_secs_f32(),
                 self.time.as_secs_f32(),
                 self.time.as_secs_f32() - self.simulation_thread.last_data.time.as_secs_f32(),
@@ -378,6 +378,12 @@ impl Environment {
                 _ => {}
             }
         }
+    }
+
+    pub fn restart(&mut self, species_gen_config: GenerationConfiguration) {
+        self.time = Duration::ZERO;
+        self.step = 0;
+        self.simulation_thread.restart(species_gen_config);
     }
 }
 
