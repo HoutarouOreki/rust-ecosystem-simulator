@@ -1,4 +1,4 @@
-use ggez::graphics::{DrawParam, Rect, Text};
+use ggez::graphics::{DrawParam, Rect};
 
 use crate::layout_info::LayoutInfo;
 
@@ -8,7 +8,6 @@ use super::{organism::Organism, states::shared_state::SharedState};
 pub struct OrganismInfo {
     layout_info: LayoutInfo,
     shared_state: SharedState,
-    info_text: Text,
 }
 
 impl OrganismInfo {
@@ -16,11 +15,10 @@ impl OrganismInfo {
         OrganismInfo {
             layout_info: organism.layout_info,
             shared_state: organism.shared_state.to_owned(),
-            info_text: organism.info_text.to_owned(),
         }
     }
 
-    pub fn from_organisms(organisms: &Vec<Organism>) -> Vec<OrganismInfo> {
+    pub fn new_from_organisms(organisms: &Vec<Organism>) -> Vec<OrganismInfo> {
         let mut vec = Vec::new();
         vec.reserve(organisms.len());
         for organism in organisms {

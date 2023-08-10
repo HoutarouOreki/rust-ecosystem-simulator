@@ -30,9 +30,13 @@ impl SimulationThread {
             let mut target_time = Duration::ZERO;
 
             loop {
-                if simulation.time < target_time {
-                    let simulation_data = simulation.run(time_step);
-                    organism_info_sender.send(simulation_data).unwrap();
+                if simulation.simulation_data.time < target_time {
+                    simulation.run(time_step);
+                    let send_result = organism_info_sender.send(simulation.simulation_data.clone());
+                    if let Err(error) = send_result {
+                        println!("Error sending simulation data to UI thread: {}", error);
+                        break;
+                    }
                 }
 
                 while let Ok(message) = message_receiver.try_recv() {
@@ -54,7 +58,7 @@ impl SimulationThread {
 
         SimulationThread {
             last_data: SimulationData {
-                organisms: Vec::new(),
+                organism_infos: Vec::new(),
                 organism_counter: HashMap::new(),
                 time: Duration::ZERO,
                 step: 0,
@@ -89,9 +93,9 @@ impl SimulationThread {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SimulationData {
-    pub organisms: Vec<OrganismInfo>,
+    pub organism_infos: Vec<OrganismInfo>,
     pub organism_counter: HashMap<String, u32>,
     pub time: Duration,
     pub step: u64,

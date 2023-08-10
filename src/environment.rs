@@ -16,7 +16,6 @@ use ggez::{
 };
 
 use crate::{
-    application_context::ApplicationContext,
     configurations::generation_configuration::GenerationConfiguration, layout_info::LayoutInfo,
     simulation_thread::SimulationThread,
 };
@@ -99,7 +98,6 @@ impl Environment {
         &mut self,
         canvas: &mut Canvas,
         gfx: &impl Has<GraphicsContext>,
-        _application_context: &ApplicationContext,
     ) {
         let display_screen_rect = canvas.screen_coordinates().unwrap();
 
@@ -142,7 +140,7 @@ impl Environment {
         self.organisms_mesh.set(
             self.simulation_thread
                 .last_data
-                .organisms
+                .organism_infos
                 .iter()
                 .filter_map(|o| {
                     o.get_draw_param(&environment_screen_rect, self.zoom, &visibility_rect)
@@ -169,7 +167,7 @@ impl Environment {
                 self.simulation_thread.last_data.time.as_secs_f32(),
                 self.time.as_secs_f32(),
                 self.time.as_secs_f32() - self.simulation_thread.last_data.time.as_secs_f32(),
-                self.simulation_thread.last_data.organisms.len(),
+                self.simulation_thread.last_data.organism_infos.len(),
                 self.organisms_mesh.instances().len(),
                 Self::species_count_string(&self.simulation_thread.last_data.organism_counter),
                 self.simulate_every_n_organism,

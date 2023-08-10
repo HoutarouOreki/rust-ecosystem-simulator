@@ -22,10 +22,8 @@ pub struct Simulation {
     to_add: Vec<Organism>,
     to_remove: HashSet<u64>,
     environment_awareness: EnvironmentAwareness,
-    organism_counter: HashMap<String, u32>,
-    step: u64,
-    pub time: Duration,
     cull_organisms_outside_view: bool,
+    pub simulation_data: SimulationData,
 }
 
 impl Simulation {
@@ -35,25 +33,35 @@ impl Simulation {
         for organism in organisms.iter() {
             Self::adjust_species_counter(organism, &mut organism_counter, true, 1);
         }
+        let organism_infos = OrganismInfo::new_from_organisms(&organisms);
+
         Simulation {
             organisms,
             to_add: Vec::new(),
             to_remove: HashSet::new(),
             environment_awareness: EnvironmentAwareness::new(32.0),
-            organism_counter,
-            step: 0,
-            time: Duration::ZERO,
             cull_organisms_outside_view: false,
+            simulation_data: SimulationData {
+                organism_infos,
+                organism_counter,
+                time: Duration::ZERO,
+                step: 0,
+            },
         }
     }
 
-    pub fn run(&mut self, delta: Duration) -> SimulationData {
+    pub fn run(&mut self, delta: Duration) {
         self.environment_awareness.refill(&self.organisms);
         for organism in self.organisms.iter_mut() {
             match Self::simulate_organism(organism, delta, &self.environment_awareness) {
                 OrganismsChange::Add(mut vec) => {
                     vec.iter().for_each(|x| {
-                        Self::adjust_species_counter(x, &mut self.organism_counter, true, 1)
+                        Self::adjust_species_counter(
+                            x,
+                            &mut self.simulation_data.organism_counter,
+                            true,
+                            1,
+                        )
                     });
                     self.to_add.append(&mut vec);
                 }
@@ -62,7 +70,12 @@ impl Simulation {
                 }
                 OrganismsChange::AddRemove(mut vec, id) => {
                     vec.iter().for_each(|x| {
-                        Self::adjust_species_counter(x, &mut self.organism_counter, true, 1)
+                        Self::adjust_species_counter(
+                            x,
+                            &mut self.simulation_data.organism_counter,
+                            true,
+                            1,
+                        )
                     });
                     self.to_add.append(&mut vec);
                     self.to_remove.insert(id);
@@ -74,21 +87,24 @@ impl Simulation {
             if !self.to_remove.contains(&x.id()) {
                 true
             } else {
-                Self::adjust_species_counter(x, &mut self.organism_counter, false, 1);
+                Self::adjust_species_counter(
+                    x,
+                    &mut self.simulation_data.organism_counter,
+                    false,
+                    1,
+                );
                 false
             }
         });
         self.organisms.append(&mut self.to_add);
-        self.step += 1;
-        self.time += delta;
+        self.simulation_data.step += 1;
+        self.simulation_data.time += delta;
         self.cull_organisms_outside_view = false;
 
-        SimulationData {
-            organisms: OrganismInfo::from_organisms(&self.organisms),
-            organism_counter: self.organism_counter.clone(),
-            step: self.step,
-            time: self.time,
-        }
+        OrganismInfo::from_organisms_fill_vec(
+            &self.organisms,
+            &mut self.simulation_data.organism_infos,
+        );
     }
 
     fn simulate_organism(

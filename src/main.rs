@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-pub mod application_context;
 mod configurations;
 mod environment;
 mod environment_awareness;
@@ -13,7 +12,6 @@ pub mod vector_helper;
 use std::time::Duration;
 use std::{env, fs};
 
-use application_context::ApplicationContext;
 use configurations::generation_configuration::GenerationConfiguration;
 use configurations::species_generation_configuration::SpeciesGenerationConfiguration;
 use environment::Environment;
@@ -48,7 +46,6 @@ struct MyGame {
     time_per_step: Duration,
     environment: Environment,
     species_gen_config: GenerationConfiguration,
-    application_context: ApplicationContext,
     speed: u32,
 }
 
@@ -62,7 +59,6 @@ impl MyGame {
             time_to_simulate: Duration::ZERO,
             environment,
             time_per_step: time_step,
-            application_context: ApplicationContext::default(),
             speed: 1,
         }
     }
@@ -212,10 +208,6 @@ impl EventHandler for MyGame {
     ) -> GameResult {
         let time_per_step_step = Duration::from_secs_f32(0.1);
         match input.keycode {
-            Some(VirtualKeyCode::H) => {
-                self.application_context.draw_each_organism_info =
-                    !self.application_context.draw_each_organism_info
-            }
             Some(VirtualKeyCode::Semicolon) => {
                 if let Some(new_value) = self.speed.checked_sub(1) {
                     self.speed = new_value;
@@ -269,8 +261,7 @@ impl EventHandler for MyGame {
         canvas.set_blend_mode(BlendMode::REPLACE);
         canvas.set_premultiplied_text(false);
 
-        self.environment
-            .draw(&mut canvas, ctx, &self.application_context);
+        self.environment.draw(&mut canvas, ctx);
 
         let (width, _) = ctx.gfx.drawable_size();
 
